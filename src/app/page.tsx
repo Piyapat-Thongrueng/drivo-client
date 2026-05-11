@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 
-import HeroSection from "@/components/landing/HeroSection";
-import HowToBookSection from "@/components/landing/HowToBookSection";
+import HeroSection from "@/components/customer/landing/HeroSection";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import VehicleSearchBar from "@/components/customer/landing/VehicleSearchBar";
+import WhyChooseDrivo from "@/components/customer/landing/WhyChooseDrivo";
+import GlobalPresence from "@/components/customer/landing/GlobalPresence";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -16,8 +19,11 @@ export default function HomePage(): React.JSX.Element {
       <Navbar />
       <main className="flex flex-1 flex-col">
         <HeroSection />
-        <HowToBookSection />
+        <VehicleSearchBar />
+        <WhyChooseDrivo />
+        <GlobalPresence />
       </main>
+      <Footer />
     </>
   );
 }

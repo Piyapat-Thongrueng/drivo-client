@@ -44,7 +44,7 @@ function TextLink({
     <Link
       href={href}
       onClick={onClick}
-      className={`body-3 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red-200 ${
+      className={`body-3 font-medium transition-colors focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200 ${
         active
           ? "border-b-2 border-brand-red-200 pb-0.5 text-brand-red-200"
           : "text-brand-gray-700 hover:text-brand-red-200"
@@ -86,14 +86,14 @@ export default function Navbar(): React.JSX.Element {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-gray-100 bg-brand-white">
+    <header className="sticky top-0 z-50 border-b border-white/25 bg-white/35 backdrop-blur-xl backdrop-saturate-150 supports-backdrop-filter:bg-white/25">
       <nav
         className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-18 sm:px-6 lg:px-8"
         aria-label="Main"
       >
         <Link
           href="/"
-          className="headline-3 shrink-0 text-brand-red-200 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red-200"
+          className="headline-3 sm:text-3xl shrink-0 text-brand-red-200 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red-200"
         >
           Drivo
         </Link>
@@ -128,7 +128,7 @@ export default function Navbar(): React.JSX.Element {
         <button
           id={menuButtonId}
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-brand-gray-700 transition-colors hover:bg-brand-gray-50 hover:text-brand-red-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200 md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-brand-gray-700 transition-colors hover:bg-black/5 hover:text-brand-red-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200 md:hidden"
           aria-expanded={menuOpen}
           aria-controls={mobilePanelId}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -148,7 +148,7 @@ export default function Navbar(): React.JSX.Element {
         role="region"
         aria-labelledby={menuButtonId}
         hidden={!menuOpen}
-        className="border-t border-brand-gray-100 bg-brand-white md:hidden"
+        className="border-t border-white/20 bg-white/90 backdrop-blur-2xl md:hidden"
       >
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
           <ul className="flex flex-col gap-4">
@@ -163,7 +163,7 @@ export default function Navbar(): React.JSX.Element {
               </li>
             ))}
           </ul>
-          <div className="flex flex-col gap-3 border-t border-brand-gray-100 pt-6">
+          <div className="flex flex-col gap-3 border-t border-white/25 pt-6">
             <TextLink
               label="Sign in"
               href={SIGN_IN_HREF}
