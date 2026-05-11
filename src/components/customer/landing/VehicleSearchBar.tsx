@@ -60,7 +60,7 @@ function LocationField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete="off"
-          className="body-2 min-h-[2.75rem] w-full rounded-lg bg-transparent py-2.5 pr-10 pl-10 text-brand-gray-900 placeholder:text-brand-gray-500 focus:outline-none"
+          className="body-2 min-h-11 w-full rounded-lg bg-transparent py-2.5 pr-10 pl-10 text-brand-gray-900 placeholder:text-brand-gray-500 focus:outline-none"
         />
         {showClear ? (
           <button
@@ -160,7 +160,7 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
-      className="group flex items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red-200"
+      className="group flex items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200"
     >
       <span
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
@@ -170,7 +170,7 @@ function Toggle({
         <span
           aria-hidden
           className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
-            checked ? "translate-x-[1.375rem]" : "translate-x-0.5"
+            checked ? "translate-x-5.5" : "translate-x-0.5"
           }`}
         />
       </span>
@@ -207,7 +207,7 @@ export default function VehicleSearchBar(): React.JSX.Element {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-brand-gray-100 bg-brand-white p-4 shadow-sm sm:p-6 lg:p-8"
+      className="border border-brand-gray-100 bg-brand-white p-4 shadow-sm sm:p-6 lg:p-8 lg:px-20"
     >
       <div
         className={`grid grid-cols-1 gap-4 sm:gap-5 ${

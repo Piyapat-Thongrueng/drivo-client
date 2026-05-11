@@ -1,3 +1,4 @@
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import StepProgressBarPlayground from "@/components/customer/bookingflow/StepProgressBarPlayground";
 import VehicleSearchBar from "@/components/customer/landing/VehicleSearchBar";
 import WhyChooseDrivo from "@/components/customer/landing/WhyChooseDrivo";
@@ -270,6 +271,49 @@ export default function DesignSystem() {
         </div>
         <div className="w-full bg-brand-white shadow-sm">
           <Navbar />
+        </div>
+      </section>
+
+      <section aria-labelledby="admin-sidebar-heading" className="w-full">
+        <div className={`${PAGE_INNER} space-y-4`}>
+          <div>
+            <h2
+              id="admin-sidebar-heading"
+              className="headline-4 text-brand-gray-900"
+            >
+              Admin sidebar
+            </h2>
+            <p className="body-3 mt-2 max-w-2xl text-brand-gray-700">
+              Desktop admin rail — wordmark uses{" "}
+              <code className="rounded bg-brand-gray-50 px-1 font-mono text-sm">
+                font-serif
+              </code>{" "}
+              in brand red; menu labels use Lucide outline icons (
+              <code className="rounded bg-brand-gray-50 px-1 font-mono text-sm">
+                strokeWidth 1.75
+              </code>
+              ). Active row: light gray fill, red vertical cap on the right.
+              Bottom area is Logout only (no Settings/Support). Preview uses{" "}
+              <code className="rounded bg-brand-gray-50 px-1 font-mono text-sm">
+                mode=&quot;demo&quot;
+              </code>{" "}
+              so rows switch active state without leaving this page; in a real
+              admin shell use{" "}
+              <code className="rounded bg-brand-gray-50 px-1 font-mono text-sm">
+                mode=&quot;routes&quot;
+              </code>{" "}
+              and optional{" "}
+              <code className="rounded bg-brand-gray-50 px-1 font-mono text-sm">
+                onLogout
+              </code>
+              .
+            </p>
+          </div>
+        </div>
+        <div className={`${PAGE_INNER} pb-2`}>
+          <div className="inline-flex overflow-hidden rounded-2xl border border-brand-gray-200 bg-brand-white shadow-sm">
+            <AdminSidebar mode="demo" className="min-h-[520px]" />
+          </div>
         </div>
       </section>
 
