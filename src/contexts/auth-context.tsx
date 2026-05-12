@@ -79,17 +79,26 @@ export function AuthProvider({
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      return signInWithBackend(getClient(), email, password);
+      const result = await signInWithBackend(getClient(), email, password);
+      // Store role in a cookie so Next.js middleware can redirect by role
+      // without making an extra network call on every page navigation.
+      // TTL matches Supabase's default session length (7 days).
+      document.cookie = `drivo-role=${result.role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      return result;
     },
     [getClient],
   );
 
   const signOut = useCallback(async () => {
     const supabase = getClient();
-    const { error } = await supabase.auth.signOut();
+    // scope: "global" tells Supabase to revoke ALL sessions for this user
+    // across every device/browser, not just the current one.
+    const { error } = await supabase.auth.signOut({ scope: "global" });
     if (error) {
       throw new Error(error.message);
     }
+    // Clear the role cookie so middleware stops recognising this device as logged-in.
+    document.cookie = "drivo-role=; path=/; max-age=0; SameSite=Lax";
   }, [getClient]);
 
   const register = useCallback(
