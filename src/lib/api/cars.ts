@@ -68,3 +68,24 @@ export async function deleteCar(id: number, token: string): Promise<void> {
     headers: authHeader(token),
   })
 }
+
+// ─── Available Cars (Customer) ───────────────────────────────────────────────
+
+export interface AvailableCarsParams {
+  pickupBranchId: number
+  pickupDatetime: string
+  dropoffDatetime: string
+}
+
+/** GET /api/cars/available — รถที่ว่างในช่วงเวลาที่ลูกค้าเลือก */
+export async function fetchAvailableCars(params: AvailableCarsParams): Promise<Car[]> {
+  const query = new URLSearchParams({
+    pickupBranchId: String(params.pickupBranchId),
+    pickupDatetime: params.pickupDatetime,
+    dropoffDatetime: params.dropoffDatetime,
+  })
+  const { data } = await axios.get<{ success: boolean; data: Car[] }>(
+    publicApiUrl(`/api/cars/available?${query.toString()}`),
+  )
+  return data.data
+}
