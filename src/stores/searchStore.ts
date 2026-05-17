@@ -1,4 +1,9 @@
 import { create } from "zustand"
+import {
+  DEFAULT_TIMEZONE,
+  defaultPickupInTz,
+  defaultDropoffInTz,
+} from "@/lib/datetime"
 
 // ─── ชนิดข้อมูล ────────────────────────────────────────────────────────────────
 
@@ -8,6 +13,10 @@ export interface SearchState {
   pickupBranchName: string
   pickupCountryId: number | null
 
+  // timezone ของสาขารับรถ (IANA เช่น "Asia/Bangkok")
+  // ใช้สำหรับคำนวณวัน-เวลาทุกอย่างในโค้ด — ต้องตรงกับ backend
+  pickupTimezone: string
+
   // ข้อมูลสาขาคืนรถ
   dropoffBranchId: number | null
   dropoffBranchName: string
@@ -15,20 +24,25 @@ export interface SearchState {
   // toggle "คืนที่สาขาอื่น"
   differentDropoff: boolean
 
-  // วัน-เวลารับและคืนรถ (ISO 8601 string)
+  // วัน-เวลารับและคืนรถ (ISO 8601 string พร้อม offset เช่น "2026-05-17T12:00:00+07:00")
   pickupDatetime: string
   dropoffDatetime: string
 }
 
 export interface SearchActions {
-  // เลือกสาขารับรถ — reset สาขาคืนถ้าประเทศเปลี่ยน
-  setPickup: (branchId: number, branchName: string, countryId: number) => void
+  // เลือกสาขารับรถ — รับ timezone ของประเทศมาด้วย
+  // reset สาขาคืนถ้าประเทศเปลี่ยน
+  setPickup: (
+    branchId: number,
+    branchName: string,
+    countryId: number,
+    timezone: string,
+  ) => void
 
   // เลือกสาขาคืนรถ (ใช้เมื่อ differentDropoff เปิดอยู่)
   setDropoff: (branchId: number, branchName: string) => void
 
   // เปิด/ปิด toggle คืนคนละที่
-  // เมื่อปิด → dropoff กลับมาเป็นสาขาเดียวกับ pickup
   setDifferentDropoff: (value: boolean) => void
 
   // อัปเดตวันเวลา
@@ -41,30 +55,18 @@ export interface SearchActions {
 
 // ─── ค่าเริ่มต้น ────────────────────────────────────────────────────────────────
 
-function defaultPickupDatetime(): string {
-  // วันนี้ เวลา 12:00 น.
-  const d = new Date()
-  d.setHours(12, 0, 0, 0)
-  return d.toISOString()
-}
-
-function defaultDropoffDatetime(): string {
-  // 2 วันข้างหน้า เวลา 12:00 น.
-  const d = new Date()
-  d.setDate(d.getDate() + 2)
-  d.setHours(12, 0, 0, 0)
-  return d.toISOString()
-}
-
 const INITIAL_STATE: SearchState = {
   pickupBranchId: null,
   pickupBranchName: "",
   pickupCountryId: null,
+  // ใช้ DEFAULT_TIMEZONE (Asia/Bangkok) เป็น fallback ก่อนที่ user จะเลือกสาขา
+  pickupTimezone: DEFAULT_TIMEZONE,
   dropoffBranchId: null,
   dropoffBranchName: "",
   differentDropoff: false,
-  pickupDatetime: defaultPickupDatetime(),
-  dropoffDatetime: defaultDropoffDatetime(),
+  // default datetime ตาม timezone เริ่มต้น (วันนี้ + 2 วันข้างหน้า เวลา 12:00)
+  pickupDatetime: defaultPickupInTz(DEFAULT_TIMEZONE),
+  dropoffDatetime: defaultDropoffInTz(DEFAULT_TIMEZONE),
 }
 
 // ─── Zustand store ─────────────────────────────────────────────────────────────
@@ -72,7 +74,7 @@ const INITIAL_STATE: SearchState = {
 export const useSearchStore = create<SearchState & SearchActions>((set) => ({
   ...INITIAL_STATE,
 
-  setPickup: (branchId, branchName, countryId) =>
+  setPickup: (branchId, branchName, countryId, timezone) =>
     set((state) => {
       // ถ้าประเทศเปลี่ยนให้ reset dropoff เพื่อป้องกัน drop-off ข้ามประเทศ
       const countryChanged = state.pickupCountryId !== countryId
@@ -80,6 +82,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set) => ({
         pickupBranchId: branchId,
         pickupBranchName: branchName,
         pickupCountryId: countryId,
+        pickupTimezone: timezone,
         dropoffBranchId: countryChanged ? null : state.dropoffBranchId,
         dropoffBranchName: countryChanged ? "" : state.dropoffBranchName,
       }
@@ -91,7 +94,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set) => ({
   setDifferentDropoff: (value) =>
     set((state) => ({
       differentDropoff: value,
-      // ปิด toggle → กลับมาใช้สาขาเดียวกับ pickup (dropoffBranchId = null หมายถึงใช้ pickup)
+      // ปิด toggle → กลับมาใช้สาขาเดียวกับ pickup (null = ใช้ pickup)
       dropoffBranchId: value ? state.dropoffBranchId : null,
       dropoffBranchName: value ? state.dropoffBranchName : "",
     })),

@@ -21,8 +21,8 @@ interface BranchLocationComboboxProps {
   /** ชื่อสาขาที่แสดงใน input */
   displayValue: string
 
-  /** callback เมื่อเลือกสาขา */
-  onChange: (branchId: number, branchName: string, countryId: number) => void
+  /** callback เมื่อเลือกสาขา — ส่ง timezone ของประเทศมาด้วยเพื่อคำนวณวัน-เวลาให้ถูก timezone */
+  onChange: (branchId: number, branchName: string, countryId: number, timezone: string) => void
 
   /** callback เมื่อกดล้างค่า (ถ้าไม่ส่งมา ปุ่มล้างจะไม่แสดง) */
   onClear?: () => void
@@ -153,7 +153,8 @@ export default function BranchLocationCombobox({
   }
 
   function handleSelect(branch: Branch, country: Country): void {
-    onChange(branch.id, branch.name, country.id)
+    // ส่ง timezone ของประเทศไปด้วย — VehicleSearchBar เก็บไว้ใน store
+    onChange(branch.id, branch.name, country.id, country.timezone)
     setOpen(false)
     setQuery("")
   }

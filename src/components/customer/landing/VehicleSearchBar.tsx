@@ -9,30 +9,13 @@ import TimeSlotSelect from "@/components/customer/search/TimeSlotSelect"
 import { useSearchStore } from "@/stores/searchStore"
 import { serializeSearchParams } from "@/lib/search-params"
 import { fetchBranches } from "@/lib/api/branches"
+import {
+  combineDatetimeInTz,
+  splitDatetimeInTz,
+  todayInTz,
+  isDropoffAfterPickup,
+} from "@/lib/datetime"
 import type { Branch } from "@/types/branch"
-
-// ─── Helper: yyyy-mm-dd จาก Date ────────────────────────────────────────────────
-
-function toDateString(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
-
-// ─── Helper: แยก datetime ISO → { date: "yyyy-mm-dd", time: "HH:MM" } ───────────
-
-function splitDatetime(iso: string): { date: string; time: string } {
-  const d = new Date(iso)
-  const date = toDateString(d)
-  const hh = String(d.getHours()).padStart(2, "0")
-  // ปัดนาทีเป็น 00 หรือ 30
-  const mm = d.getMinutes() < 30 ? "00" : "30"
-  return { date, time: `${hh}:${mm}` }
-}
-
-// ─── Helper: รวม date + time → ISO string ───────────────────────────────────────
-
-function combineDatetime(dateStr: string, timeStr: string): string {
-  return new Date(`${dateStr}T${timeStr}:00`).toISOString()
-}
 
 // ─── Toggle ──────────────────────────────────────────────────────────────────────
 
@@ -79,14 +62,17 @@ export default function VehicleSearchBar(): React.JSX.Element {
   const router = useRouter()
   const store = useSearchStore()
 
-  // แยก datetime → date + time สำหรับ input
-  const pickupParts = useMemo(() => splitDatetime(store.pickupDatetime), [store.pickupDatetime])
-  const dropoffParts = useMemo(() => splitDatetime(store.dropoffDatetime), [store.dropoffDatetime])
+  // ใช้ timezone ของสาขารับรถ — ทุก helper วัน-เวลาต้องผ่าน timezone นี้
+  const tz = store.pickupTimezone
 
-  // วันที่น้อยที่สุดที่เลือกได้ = วันนี้
-  const todayStr = useMemo(() => toDateString(new Date()), [])
+  // แยก ISO → date + time ใน timezone สาขา (ไม่ใช่ timezone เครื่อง user)
+  const pickupParts = useMemo(() => splitDatetimeInTz(store.pickupDatetime, tz), [store.pickupDatetime, tz])
+  const dropoffParts = useMemo(() => splitDatetimeInTz(store.dropoffDatetime, tz), [store.dropoffDatetime, tz])
 
-  // ─── สาขาทั้งหมด: โหลดมาเพื่อตรวจ single-branch country ─────────────────────
+  // วันที่ "วันนี้" ใน timezone สาขา เพื่อป้องกันเลือกวันในอดีต
+  const todayStr = useMemo(() => todayInTz(tz), [tz])
+
+  // ─── โหลดสาขาทั้งหมดเพื่อตรวจ single-branch country ─────────────────────────
 
   const [allBranches, setAllBranches] = useState<Branch[]>([])
 
@@ -94,7 +80,7 @@ export default function VehicleSearchBar(): React.JSX.Element {
     fetchBranches().then(setAllBranches).catch(() => {/* ไม่ error หน้า */})
   }, [])
 
-  // นับจำนวน active branch ในประเทศของ pickup (ยกเว้นตัวเอง)
+  // นับ active branch ในประเทศ pickup (ยกเว้น pickup เอง)
   const availableDropoffBranches = useMemo(
     () =>
       store.pickupCountryId != null
@@ -117,19 +103,20 @@ export default function VehicleSearchBar(): React.JSX.Element {
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
-  function handlePickupChange(branchId: number, branchName: string, countryId: number): void {
-    store.setPickup(branchId, branchName, countryId)
-    // ล้าง error ของ pickup
+  function handlePickupChange(
+    branchId: number,
+    branchName: string,
+    countryId: number,
+    timezone: string,
+  ): void {
+    // setPickup รับ timezone ด้วย — store จะอัปเดต pickupTimezone
+    store.setPickup(branchId, branchName, countryId, timezone)
     setErrors((prev) => ({ ...prev, pickup: "" }))
   }
 
-  function handleDropoffChange(branchId: number, branchName: string, countryId: number): void {
+  function handleDropoffChange(branchId: number, branchName: string): void {
     store.setDropoff(branchId, branchName)
     setErrors((prev) => ({ ...prev, dropoff: "" }))
-    // ป้องกันการเลือก branchId = 0 ซึ่งเกิดจากการ clear
-    if (branchId && countryId) {
-      setErrors((prev) => ({ ...prev, dropoff: "" }))
-    }
   }
 
   function handleDropoffClear(): void {
@@ -137,41 +124,41 @@ export default function VehicleSearchBar(): React.JSX.Element {
   }
 
   function handleToggleChange(next: boolean): void {
-    // ถ้าประเทศมีสาขาเดียว ไม่อนุญาตให้เปิด toggle
     if (next && isSingleBranchCountry) return
     store.setDifferentDropoff(next)
-    // ล้าง error drop-off เมื่อปิด toggle
     if (!next) setErrors((prev) => ({ ...prev, dropoff: "" }))
   }
 
   function handlePickupDateChange(date: string): void {
-    store.setPickupDatetime(combineDatetime(date, pickupParts.time))
-    // ถ้า dropoff date < pickup date ให้ขยับ dropoff ไปด้วย
+    // รวม date + time เป็น ISO โดยอ้าง timezone สาขา (ไม่ใช่ browser)
+    store.setPickupDatetime(combineDatetimeInTz(date, pickupParts.time, tz))
+    // ถ้า dropoff date < pickup date ให้ขยับ dropoff ตาม
     if (date > dropoffParts.date) {
-      store.setDropoffDatetime(combineDatetime(date, dropoffParts.time))
+      store.setDropoffDatetime(combineDatetimeInTz(date, dropoffParts.time, tz))
     }
     setErrors((prev) => ({ ...prev, datetime: "" }))
   }
 
   function handlePickupTimeChange(time: string): void {
-    const newPickup = combineDatetime(pickupParts.date, time)
+    const newPickup = combineDatetimeInTz(pickupParts.date, time, tz)
     store.setPickupDatetime(newPickup)
-    // ถ้า pickup ≥ dropoff ให้ขยับ dropoff ไปด้วย
-    const newDropoff = combineDatetime(dropoffParts.date, dropoffParts.time)
-    if (newPickup >= newDropoff) {
-      const adjusted = new Date(new Date(newPickup).getTime() + 2 * 60 * 60 * 1000)
-      store.setDropoffDatetime(adjusted.toISOString())
+    // ถ้า pickup ≥ dropoff ขยับ dropoff +2 ชั่วโมง
+    if (!isDropoffAfterPickup(newPickup, store.dropoffDatetime)) {
+      const newDropoffMs = new Date(newPickup).getTime() + 2 * 60 * 60 * 1000
+      // แปลง timestamp → ISO ใน timezone สาขา แล้ว snap ไป slot 30 นาที
+      const snapped = splitDatetimeInTz(new Date(newDropoffMs).toISOString(), tz)
+      store.setDropoffDatetime(combineDatetimeInTz(snapped.date, snapped.time, tz))
     }
     setErrors((prev) => ({ ...prev, datetime: "" }))
   }
 
   function handleDropoffDateChange(date: string): void {
-    store.setDropoffDatetime(combineDatetime(date, dropoffParts.time))
+    store.setDropoffDatetime(combineDatetimeInTz(date, dropoffParts.time, tz))
     setErrors((prev) => ({ ...prev, datetime: "" }))
   }
 
   function handleDropoffTimeChange(time: string): void {
-    store.setDropoffDatetime(combineDatetime(dropoffParts.date, time))
+    store.setDropoffDatetime(combineDatetimeInTz(dropoffParts.date, time, tz))
     setErrors((prev) => ({ ...prev, datetime: "" }))
   }
 
@@ -187,19 +174,14 @@ export default function VehicleSearchBar(): React.JSX.Element {
     // Approach C: safety net — ถ้า toggle เปิดแต่ไม่มี drop-off ที่ถูกต้อง
     if (store.differentDropoff) {
       if (!store.dropoffBranchId) {
-        if (isSingleBranchCountry) {
-          newErrors.dropoff =
-            'No other branches available in this country. Please disable "Return to different location".'
-        } else {
-          newErrors.dropoff = "Please select a drop-off location."
-        }
+        newErrors.dropoff = isSingleBranchCountry
+          ? 'No other branches available in this country. Please disable "Return to different location".'
+          : "Please select a drop-off location."
       }
     }
 
-    // ตรวจ drop-off ≥ pickup
-    const pickup = new Date(store.pickupDatetime)
-    const dropoff = new Date(store.dropoffDatetime)
-    if (dropoff <= pickup) {
+    // ตรวจ dropoff > pickup ด้วย dayjs (timezone-aware)
+    if (!isDropoffAfterPickup(store.pickupDatetime, store.dropoffDatetime)) {
       newErrors.datetime = "Drop-off date & time must be after pick-up."
     }
 
@@ -218,17 +200,13 @@ export default function VehicleSearchBar(): React.JSX.Element {
 
     const qs = serializeSearchParams({
       ...store,
-      dropoffBranchId: store.differentDropoff
-        ? store.dropoffBranchId
-        : store.pickupBranchId,
-      dropoffBranchName: store.differentDropoff
-        ? store.dropoffBranchName
-        : store.pickupBranchName,
+      dropoffBranchId: store.differentDropoff ? store.dropoffBranchId : store.pickupBranchId,
+      dropoffBranchName: store.differentDropoff ? store.dropoffBranchName : store.pickupBranchName,
     })
     router.push(`/cars?${qs}`)
   }
 
-  // ─── แจ้ง user เมื่อเปลี่ยน pickup มาประเทศที่มีสาขาเดียว ──────────────────────
+  // ─── ปิด toggle อัตโนมัติเมื่อประเทศมีสาขาเดียว ──────────────────────────────
 
   useEffect(() => {
     if (isSingleBranchCountry && store.differentDropoff) {
@@ -262,14 +240,10 @@ export default function VehicleSearchBar(): React.JSX.Element {
           <BranchLocationCombobox
             id="dropoff-location"
             label="Drop-off location"
-            placeholder={
-              store.pickupBranchId
-                ? "Select drop-off location"
-                : "Select pick-up first"
-            }
+            placeholder={store.pickupBranchId ? "Select drop-off location" : "Select pick-up first"}
             selectedBranchId={store.dropoffBranchId}
             displayValue={store.dropoffBranchName}
-            onChange={handleDropoffChange}
+            onChange={(branchId, branchName) => handleDropoffChange(branchId, branchName)}
             onClear={handleDropoffClear}
             filterCountryId={store.pickupCountryId}
             excludeBranchId={store.pickupBranchId}
@@ -320,7 +294,6 @@ export default function VehicleSearchBar(): React.JSX.Element {
             onCheckedChange={handleToggleChange}
             label="Return to different location"
           />
-          {/* แจ้ง user ถ้าประเทศมีสาขาเดียว */}
           {isSingleBranchCountry && (
             <p className="body-3 ml-14 text-brand-gray-500">
               Only one service point in this country — return at the same branch.

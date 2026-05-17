@@ -10,27 +10,11 @@ import CarGrid from "@/components/customer/cars/CarGrid"
 import SearchStoreHydrator from "@/components/customer/search/SearchStoreHydrator"
 import { parseSearchParams } from "@/lib/search-params"
 import { fetchAvailableCars } from "@/lib/api/cars"
+import { formatDatetimeInTz } from "@/lib/datetime"
 
 export const metadata: Metadata = {
   title: "Available Vehicles",
   description: "Browse available vehicles for your trip.",
-}
-
-// ─── Helper: format ISO datetime → "May 17, 2026, 12:00 PM" ──────────────────────
-
-function formatDatetime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
-  } catch {
-    return iso
-  }
 }
 
 // ─── Trip Summary ────────────────────────────────────────────────────────────────
@@ -41,6 +25,7 @@ interface TripSummaryProps {
   pickupDatetime: string
   dropoffDatetime: string
   differentDropoff: boolean
+  timezone: string
 }
 
 function TripSummary({
@@ -49,6 +34,7 @@ function TripSummary({
   pickupDatetime,
   dropoffDatetime,
   differentDropoff,
+  timezone,
 }: TripSummaryProps): React.JSX.Element {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-gray-100 bg-brand-gray-50 px-4 py-3 sm:gap-5 sm:px-6">
@@ -60,10 +46,10 @@ function TripSummary({
         </span>
       </div>
 
-      {/* วันเวลารับรถ */}
+      {/* วันเวลารับรถ — แสดงใน timezone สาขา ไม่ใช่ timezone เครื่อง user */}
       <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 shrink-0 text-brand-gray-500" aria-hidden />
-        <span className="body-3 text-brand-gray-700">{formatDatetime(pickupDatetime)}</span>
+        <span className="body-3 text-brand-gray-700">{formatDatetimeInTz(pickupDatetime, timezone)}</span>
       </div>
 
       <ArrowRight className="h-4 w-4 shrink-0 text-brand-gray-400" aria-hidden />
@@ -79,7 +65,7 @@ function TripSummary({
       {/* วันเวลาคืนรถ */}
       <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 shrink-0 text-brand-gray-500" aria-hidden />
-        <span className="body-3 text-brand-gray-700">{formatDatetime(dropoffDatetime)}</span>
+        <span className="body-3 text-brand-gray-700">{formatDatetimeInTz(dropoffDatetime, timezone)}</span>
       </div>
     </div>
   )
@@ -145,6 +131,7 @@ export default async function CarsPage({ searchParams }: CarsPageProps): Promise
             pickupDatetime={search.pickupDatetime}
             dropoffDatetime={search.dropoffDatetime}
             differentDropoff={search.differentDropoff}
+            timezone={search.pickupTimezone}
           />
         ) : (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">

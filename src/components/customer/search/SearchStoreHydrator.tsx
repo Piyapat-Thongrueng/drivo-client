@@ -17,9 +17,14 @@ export default function SearchStoreHydrator({ search }: SearchStoreHydratorProps
   const store = useSearchStore()
 
   useEffect(() => {
-    // hydrate ข้อมูล pickup
+    // hydrate ข้อมูล pickup — ส่ง timezone ด้วยเพื่อให้ store รู้ว่าใช้ timezone ไหน
     if (search.pickupBranchId && search.pickupCountryId) {
-      store.setPickup(search.pickupBranchId, search.pickupBranchName, search.pickupCountryId)
+      store.setPickup(
+        search.pickupBranchId,
+        search.pickupBranchName,
+        search.pickupCountryId,
+        search.pickupTimezone,
+      )
     }
 
     // hydrate ข้อมูล dropoff (ถ้ามี)
