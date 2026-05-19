@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import LoginForm from "@/components/auth/LoginForm";
+import RedirectIfAuthenticated from "@/components/auth/RedirectIfAuthenticated";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -11,6 +12,9 @@ export const metadata: Metadata = {
 export default function LoginPage(): React.JSX.Element {
   return (
     <div className="flex min-h-screen flex-col bg-linear-to-br from-brand-gray-50 via-white to-brand-red-50">
+      {/* ถ้า login แล้ว → redirect กลับหน้าหลักทันที ไม่ให้เข้าหน้านี้ซ้ำ */}
+      <RedirectIfAuthenticated to="/" />
+
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <LoginForm />

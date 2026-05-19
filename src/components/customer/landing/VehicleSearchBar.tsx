@@ -14,6 +14,7 @@ import {
   splitDatetimeInTz,
   todayInTz,
   isDropoffAfterPickup,
+  formatTimezoneLabel,
 } from "@/lib/datetime"
 import type { Branch } from "@/types/branch"
 
@@ -286,8 +287,8 @@ export default function VehicleSearchBar(): React.JSX.Element {
         </p>
       )}
 
-      <div className="mt-6 flex flex-col gap-4 border-t border-brand-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-1">
+      <div className="mt-6 flex flex-col gap-4 border-t border-brand-gray-100 pt-6 lg:flex-row lg:items-center lg:gap-6">
+        <div className="flex shrink-0 flex-col gap-1">
           <Toggle
             checked={store.differentDropoff}
             disabled={isSingleBranchCountry}
@@ -301,11 +302,27 @@ export default function VehicleSearchBar(): React.JSX.Element {
           )}
         </div>
 
+        {/* อธิบาย timezone — ใช้พื้นที่ว่างระหว่าง toggle กับปุ่ม */}
+        <p className="body-3 flex-1 text-brand-gray-700 lg:text-center">
+          All pick-up and drop-off times use the{" "}
+          <span className="font-bold text-brand-red-200">local time at your pick-up branch</span>
+          , not your device&apos;s time zone.
+          {store.pickupBranchId && (
+            <>
+              {" "}
+              <span className="text-brand-gray-400">·</span> Currently:{" "}
+              <span className="font-bold text-brand-red-200">
+                {formatTimezoneLabel(store.pickupTimezone)}
+              </span>
+            </>
+          )}
+        </p>
+
         <Button
           type="submit"
           variant="primary"
           size="lg"
-          className="w-full font-bold sm:w-auto sm:min-w-44"
+          className="w-full shrink-0 font-bold lg:w-auto lg:min-w-44"
         >
           Show Vehicles
         </Button>

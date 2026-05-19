@@ -4,6 +4,7 @@ import { Briefcase, Users } from "lucide-react"
 
 import type { Car } from "@/types/car"
 import { Button } from "@/components/ui/Button"
+import { formatCurrency } from "@/lib/currency"
 
 // ─── Helper: ป้าย carType ────────────────────────────────────────────────────────
 
@@ -15,25 +16,19 @@ const CAR_TYPE_LABELS: Record<string, string> = {
   pickup: "Pickup",
 }
 
-// ─── Helper: format ตัวเลข + สกุลเงิน (ใช้ Intl.NumberFormat) ────────────────────
-
-function formatRate(rate: string): string {
-  const n = parseFloat(rate)
-  if (isNaN(n)) return rate
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
-
 // ─── Props ──────────────────────────────────────────────────────────────────────
 
 interface CarCardProps {
   car: Car
   /** query string ที่ต้องส่งต่อไปยัง booking page เพื่อ preserve search context */
   searchQuery: string
+  /** รหัสสกุลเงินของสาขารับรถ เช่น "THB", "GBP" */
+  currencyCode: string
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────────
 
-export default function CarCard({ car, searchQuery }: CarCardProps): React.JSX.Element {
+export default function CarCard({ car, searchQuery, currencyCode }: CarCardProps): React.JSX.Element {
   const carTypeLabel = CAR_TYPE_LABELS[car.carType] ?? car.carType
   const bookingHref = `/cars/${car.id}?${searchQuery}`
 
@@ -51,7 +46,6 @@ export default function CarCard({ car, searchQuery }: CarCardProps): React.JSX.E
             priority={false}
           />
         ) : (
-          /* placeholder เมื่อไม่มีรูป */
           <div className="flex h-full items-center justify-center text-brand-gray-300">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -97,16 +91,16 @@ export default function CarCard({ car, searchQuery }: CarCardProps): React.JSX.E
           <span className="body-3 capitalize">{car.fuelType}</span>
         </div>
 
-        {/* ราคา + ปุ่ม (ดัน ปุ่มลงล่างสุด) */}
+        {/* ราคา + ปุ่ม */}
         <div className="mt-auto flex items-end justify-between gap-2">
           <div>
             <p className="body-3 text-brand-gray-500">Starting from</p>
             <p className="headline-3 font-bold text-brand-gray-900">
-              {formatRate(car.dailyRate)}
+              {formatCurrency(car.dailyRate, currencyCode)}
               <span className="body-3 ml-1 font-normal text-brand-gray-500">/day</span>
             </p>
             <p className="body-3 text-brand-gray-500">
-              or {formatRate(car.hourlyRate)}/hr
+              or {formatCurrency(car.hourlyRate, currencyCode)}/hr
             </p>
           </div>
 

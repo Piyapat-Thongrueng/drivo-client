@@ -1,11 +1,6 @@
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { redirect } from "next/navigation"
 
-export default function CustomerHomePage(): React.JSX.Element {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-gray-50 p-8">
-      <p className="text-2xl font-semibold text-brand-gray-900">You are User</p>
-      <p className="body-2 text-brand-gray-600">Customer area (placeholder)</p>
-      <LogoutButton />
-    </main>
-  );
+// หน้านี้ไม่ได้ใช้แล้ว — redirect กลับหน้าหลัก
+export default function CustomerPage(): never {
+  redirect("/")
 }

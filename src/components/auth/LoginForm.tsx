@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Eye,
@@ -19,6 +19,7 @@ import {
   flattenZodFieldErrors,
   loginFormSchema,
 } from "@/lib/validation/auth-forms";
+import LoginSuccessModal from "@/components/auth/LoginSuccessModal";
 
 // --- Sub-components ---
 
@@ -177,6 +178,9 @@ export default function LoginForm(): React.JSX.Element {
   }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  /** แสดง modal สำเร็จ (เฉพาะ role user) */
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("/");
   /** Prevents double submit before React disables the button. */
   const loginInFlightRef = useRef(false);
 
@@ -226,7 +230,14 @@ export default function LoginForm(): React.JSX.Element {
     setIsLoading(true);
     try {
       const result = await signIn(parsed.data.email, parsed.data.password);
-      router.push(result.defaultPath);
+      if (result.role === "user") {
+        // user role → แสดง modal countdown ก่อน redirect ไปหน้าหลัก
+        setRedirectPath("/");
+        setShowSuccessModal(true);
+      } else {
+        // super_admin / branch_staff → redirect ทันที ไม่ต้อง modal
+        router.push(result.defaultPath);
+      }
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Invalid user credentials or user not found.";
@@ -237,7 +248,16 @@ export default function LoginForm(): React.JSX.Element {
     }
   }
 
+  const handleModalConfirm = useCallback((): void => {
+    router.push(redirectPath);
+  }, [router, redirectPath]);
+
   return (
+    <>
+      {/* Modal ขึ้นด้านบนสุด — แสดงหลัง sign in สำเร็จ (role user) */}
+      {showSuccessModal && (
+        <LoginSuccessModal onConfirm={handleModalConfirm} />
+      )}
     <div className="w-full rounded-2xl border border-brand-gray-100 bg-brand-white px-6 py-10 shadow-sm sm:px-10">
       {/* Heading */}
       <div className="mb-8 text-center">
@@ -294,5 +314,6 @@ export default function LoginForm(): React.JSX.Element {
         <TrustBadges />
       </div>
     </div>
+    </>
   );
 }

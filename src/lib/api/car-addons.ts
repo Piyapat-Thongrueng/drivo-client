@@ -28,6 +28,14 @@ export async function fetchCarAddons(carId: number, token: string): Promise<CarA
   return data.data.map(normalizeAddon)
 }
 
+/** GET /api/cars/:carId/addons — public (no token) — ลูกค้าและ guest ดูได้ */
+export async function fetchCarAddonsPublic(carId: number): Promise<CarAddon[]> {
+  const { data } = await axios.get<{ success: boolean; data: CarAddon[] }>(
+    publicApiUrl(`/api/cars/${carId}/addons`),
+  )
+  return data.data.map(normalizeAddon)
+}
+
 export async function createCarAddon(
   carId: number,
   payload: CreateCarAddonPayload,

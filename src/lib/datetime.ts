@@ -89,3 +89,14 @@ export function defaultDropoffInTz(tz: string = DEFAULT_TIMEZONE): string {
 export function isDropoffAfterPickup(pickupIso: string, dropoffIso: string): boolean {
   return dayjs(dropoffIso).isAfter(dayjs(pickupIso))
 }
+
+/**
+ * แปลง IANA timezone เป็นข้อความอ่านง่ายสำหรับ UI
+ * เช่น "Asia/Bangkok" → "Bangkok (UTC+7)"
+ */
+export function formatTimezoneLabel(tz: string): string {
+  const city = tz.split("/").pop()?.replace(/_/g, " ") ?? tz
+  const offset = dayjs().tz(tz).format("Z") // +07:00
+  const utcLabel = offset === "Z" ? "UTC" : `UTC${offset.replace(":00", "")}`
+  return `${city} (${utcLabel})`
+}

@@ -3,6 +3,8 @@ import {
   DEFAULT_TIMEZONE,
   defaultPickupInTz,
   defaultDropoffInTz,
+  splitDatetimeInTz,
+  combineDatetimeInTz,
 } from "@/lib/datetime"
 
 // ─── ชนิดข้อมูล ────────────────────────────────────────────────────────────────
@@ -78,11 +80,25 @@ export const useSearchStore = create<SearchState & SearchActions>((set) => ({
     set((state) => {
       // ถ้าประเทศเปลี่ยนให้ reset dropoff เพื่อป้องกัน drop-off ข้ามประเทศ
       const countryChanged = state.pickupCountryId !== countryId
+      const timezoneChanged = state.pickupTimezone !== timezone
+
+      // ถ้า timezone เปลี่ยน ให้คงวัน-เวลาที่ user เลือกไว้ แต่แปลง offset ให้ตรงประเทศใหม่
+      let pickupDatetime = state.pickupDatetime
+      let dropoffDatetime = state.dropoffDatetime
+      if (timezoneChanged && state.pickupTimezone) {
+        const pickupParts = splitDatetimeInTz(state.pickupDatetime, state.pickupTimezone)
+        const dropoffParts = splitDatetimeInTz(state.dropoffDatetime, state.pickupTimezone)
+        pickupDatetime = combineDatetimeInTz(pickupParts.date, pickupParts.time, timezone)
+        dropoffDatetime = combineDatetimeInTz(dropoffParts.date, dropoffParts.time, timezone)
+      }
+
       return {
         pickupBranchId: branchId,
         pickupBranchName: branchName,
         pickupCountryId: countryId,
         pickupTimezone: timezone,
+        pickupDatetime,
+        dropoffDatetime,
         dropoffBranchId: countryChanged ? null : state.dropoffBranchId,
         dropoffBranchName: countryChanged ? "" : state.dropoffBranchName,
       }

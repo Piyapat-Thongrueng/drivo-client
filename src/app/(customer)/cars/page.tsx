@@ -10,6 +10,7 @@ import CarGrid from "@/components/customer/cars/CarGrid"
 import SearchStoreHydrator from "@/components/customer/search/SearchStoreHydrator"
 import { parseSearchParams } from "@/lib/search-params"
 import { fetchAvailableCars } from "@/lib/api/cars"
+import { fetchCountry } from "@/lib/api/countries"
 import { formatDatetimeInTz } from "@/lib/datetime"
 
 export const metadata: Metadata = {
@@ -91,17 +92,31 @@ export default async function CarsPage({ searchParams }: CarsPageProps): Promise
     })
     .join("&")
 
-  // fetch รถที่ว่างจาก backend (server-side)
+  // fetch รถที่ว่างจาก backend (server-side) และ currency ของสาขา
   let cars: Awaited<ReturnType<typeof fetchAvailableCars>> = []
   let fetchError = false
+  let currencyCode = "THB" // fallback
 
   if (search.pickupBranchId) {
     try {
-      cars = await fetchAvailableCars({
-        pickupBranchId: search.pickupBranchId,
-        pickupDatetime: search.pickupDatetime,
-        dropoffDatetime: search.dropoffDatetime,
-      })
+      const [availableCars, country] = await Promise.allSettled([
+        fetchAvailableCars({
+          pickupBranchId: search.pickupBranchId,
+          pickupDatetime: search.pickupDatetime,
+          dropoffDatetime: search.dropoffDatetime,
+        }),
+        search.pickupCountryId ? fetchCountry(search.pickupCountryId) : Promise.resolve(null),
+      ])
+
+      if (availableCars.status === "fulfilled") {
+        cars = availableCars.value
+      } else {
+        fetchError = true
+      }
+
+      if (country.status === "fulfilled" && country.value) {
+        currencyCode = country.value.currencyCode
+      }
     } catch {
       fetchError = true
     }
@@ -154,13 +169,13 @@ export default async function CarsPage({ searchParams }: CarsPageProps): Promise
           </div>
         )}
 
-        {/* หัวข้อ + รายการรถ */}
+        {/* หัวข้อ + รายการรถ — ไม่แสดง "No vehicles" ถ้า API error (จะสับสนกับ banner ด้านบน) */}
         <section aria-label="Available vehicles">
           <h2 className="headline-3 mb-6 font-bold text-brand-gray-900">
             AVAILABLE VEHICLES{" "}
             {!fetchError && <span className="text-brand-gray-500">({cars.length})</span>}
           </h2>
-          <CarGrid cars={cars} searchQuery={currentQueryString} />
+          {!fetchError && <CarGrid cars={cars} searchQuery={currentQueryString} currencyCode={currencyCode} />}
         </section>
       </main>
 
