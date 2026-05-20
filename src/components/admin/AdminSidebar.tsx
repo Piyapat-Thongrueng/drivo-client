@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
 import {
+  BookOpen,
   Car,
   ClipboardCheck,
   Globe,
@@ -28,6 +29,7 @@ export const ADMIN_SIDEBAR_NAV: readonly AdminSidebarNavItem[] = [
     href: "/admin/booking-approval",
     icon: ClipboardCheck,
   },
+  { label: "All Bookings", href: "/admin/bookings", icon: BookOpen },
   { label: "Country Management", href: "/admin/countries", icon: Globe },
   { label: "Branch Management", href: "/admin/branches", icon: Store },
   { label: "Car Management", href: "/admin/cars", icon: Car },

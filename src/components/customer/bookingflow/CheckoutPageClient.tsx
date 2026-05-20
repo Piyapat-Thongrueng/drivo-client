@@ -21,6 +21,7 @@ import type { Car } from "@/types/car"
 import type { CarAddon } from "@/types/car-addon"
 import { previewPricing } from "@/lib/api/pricing"
 import { createBooking } from "@/lib/api/bookings"
+import { normalizeBookingIdFromApi } from "@/lib/booking-id"
 import { getMyProfile, updateMyProfile } from "@/lib/api/auth"
 
 // ─── Country codes for phone field ───────────────────────────────────────────────
@@ -239,7 +240,14 @@ export default function CheckoutPageClient({
         token,
       )
 
-      setSubmittedBooking({ reference: booking.reference, id: booking.id })
+      const bookingId = normalizeBookingIdFromApi(booking.id) ?? booking.id
+      if (typeof bookingId !== "number" || !Number.isInteger(bookingId) || bookingId <= 0) {
+        setSubmitError(
+          "Booking was submitted but we could not open the status page. Please check My Bookings.",
+        )
+        return
+      }
+      setSubmittedBooking({ reference: booking.reference, id: bookingId })
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong. Please try again."

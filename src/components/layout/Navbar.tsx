@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -13,11 +13,13 @@ import { useProfile } from "@/hooks/useProfile";
  * Main nav links (center on desktop, list in mobile menu).
  * Change labels or paths here only.
  */
-const MAIN_LINKS = [
+const PUBLIC_LINKS = [
   { label: "Home", href: "/" },
   { label: "Booking", href: "/booking" },
   { label: "Location", href: "/location" },
 ] as const;
+
+const MY_BOOKINGS_LINK = { label: "My bookings", href: "/my-account" } as const;
 
 const SIGN_IN_HREF = "/login";
 const REGISTER_HREF = "/register";
@@ -138,6 +140,11 @@ export default function Navbar(): React.JSX.Element {
   const { profile } = useProfile();
   const isLoggedIn = !!session;
 
+  const mainLinks = useMemo(
+    () => (isLoggedIn ? [...PUBLIC_LINKS, MY_BOOKINGS_LINK] : [...PUBLIC_LINKS]),
+    [isLoggedIn],
+  );
+
   const closeMenu = useCallback((): void => {
     setMenuOpen(false);
   }, []);
@@ -177,7 +184,7 @@ export default function Navbar(): React.JSX.Element {
         {/* Tablet and desktop: links in the middle */}
         <div className="hidden min-w-0 flex-1 items-center justify-center gap-8 md:flex lg:gap-10">
           <ul className="flex items-center gap-6 lg:gap-8">
-            {MAIN_LINKS.map((link) => (
+            {mainLinks.map((link) => (
               <li key={link.href}>
                 <TextLink
                   label={link.label}
@@ -247,7 +254,7 @@ export default function Navbar(): React.JSX.Element {
       >
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
           <ul className="flex flex-col gap-4">
-            {MAIN_LINKS.map((link) => (
+            {mainLinks.map((link) => (
               <li key={link.href}>
                 <TextLink
                   label={link.label}

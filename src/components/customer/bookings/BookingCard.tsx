@@ -4,6 +4,7 @@ import dayjs from "dayjs"
 import type { Booking } from "@/types/booking"
 import { Button } from "@/components/ui/Button"
 import BookingStatusBadge from "@/components/customer/bookings/BookingStatusBadge"
+import { normalizeBookingIdFromApi } from "@/lib/booking-id"
 import { formatCurrency } from "@/lib/currency"
 import { formatDatetimeInTz, DEFAULT_TIMEZONE } from "@/lib/datetime"
 
@@ -17,14 +18,18 @@ export default function BookingCard({
   booking,
   carLabel,
 }: BookingCardProps): React.JSX.Element {
-  const paymentUrl = `/payment/${booking.id}`
+  const paymentBookingId = normalizeBookingIdFromApi(booking.id)
+  const paymentUrl =
+    paymentBookingId != null ? `/payment/${paymentBookingId}` : "/my-account"
   const isPaymentExpired =
     booking.status === "pending_payment" &&
     booking.paymentDeadline
       ? dayjs().isAfter(dayjs(booking.paymentDeadline))
       : false
   const showPayNow =
-    booking.status === "pending_payment" && !isPaymentExpired
+    paymentBookingId != null &&
+    booking.status === "pending_payment" &&
+    !isPaymentExpired
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-brand-gray-100 bg-white p-5 shadow-sm">

@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 
+import { sanitizeInternalReturnUrl } from "@/lib/return-url";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -256,7 +257,7 @@ export default function RegisterForm(): React.JSX.Element {
       });
       // ถ้ามี returnUrl (มาจาก checkout guest flow) → กลับไปหน้านั้น
       // ถ้าไม่มี → ไปหน้า login (user ทั่วไป register แล้วให้ sign in)
-      router.push(returnUrl ?? "/login");
+      router.push(sanitizeInternalReturnUrl(returnUrl, "/login"));
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Something went wrong. Try again.";
