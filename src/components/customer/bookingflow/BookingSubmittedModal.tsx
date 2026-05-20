@@ -47,14 +47,25 @@ export default function BookingSubmittedModal({
           Payment is not charged until you complete checkout after approval.
         </p>
 
-        <Button
-          href={`/payment/${bookingId}`}
-          variant="primary"
-          size="lg"
-          className="w-full justify-center font-bold"
-        >
-          View booking status
-        </Button>
+        {Number.isInteger(bookingId) && bookingId > 0 ? (
+          <Button
+            href={`/payment/${bookingId}`}
+            variant="primary"
+            size="lg"
+            className="w-full justify-center font-bold"
+          >
+            View booking status
+          </Button>
+        ) : (
+          <Button
+            href="/my-account"
+            variant="primary"
+            size="lg"
+            className="w-full justify-center font-bold"
+          >
+            Go to My Bookings
+          </Button>
+        )}
       </div>
     </div>
   )

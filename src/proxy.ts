@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware-client";
 import type { AppUserRole } from "@/lib/auth/login";
+import { parseBookingId } from "@/lib/booking-id";
 
 // ---------------------------------------------------------------------------
 // Route maps
@@ -49,6 +50,21 @@ function isAuthOnlyPath(pathname: string): boolean {
 // ---------------------------------------------------------------------------
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Invalid `/payment/:bookingId` (e.g. literal "undefined" from bad links) → My Bookings
+  const paymentPrefix = "/payment/";
+  if (pathname.startsWith(paymentPrefix)) {
+    const afterPrefix = pathname.slice(paymentPrefix.length);
+    const segment = afterPrefix.split("/")[0] ?? "";
+    if (parseBookingId(segment) == null) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/my-account";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
   const response = NextResponse.next();
   const supabase = createMiddlewareSupabaseClient(request, response);
 
@@ -58,7 +74,6 @@ export async function proxy(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { pathname } = request.nextUrl;
   const storedRole = request.cookies.get("drivo-role")?.value as
     | AppUserRole
     | undefined;

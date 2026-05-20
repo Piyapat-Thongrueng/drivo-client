@@ -7,24 +7,42 @@ import { fetchCar } from "@/lib/api/cars"
 import { BookingTable } from "@/components/admin/bookings/BookingTable"
 import { BookingDetailDrawer } from "@/components/admin/bookings/BookingDetailDrawer"
 import { Pagination } from "@/components/ui/Pagination"
-import type { Booking } from "@/types/booking"
+import type { Booking, BookingStatus } from "@/types/booking"
 
 const PAGE_SIZE = 15
 
-export default function BookingApprovalPage(): React.JSX.Element {
+const STATUS_OPTIONS: { value: BookingStatus | ""; label: string }[] = [
+  { value: "",                 label: "All statuses" },
+  { value: "pending_approval", label: "Awaiting approval" },
+  { value: "pending_payment",  label: "Pending payment" },
+  { value: "confirmed",        label: "Confirmed" },
+  { value: "active",           label: "Active" },
+  { value: "completed",        label: "Completed" },
+  { value: "cancelled",        label: "Cancelled" },
+  { value: "rejected",         label: "Rejected" },
+]
+
+export default function AllBookingsPage(): React.JSX.Element {
   const { session } = useAuth()
   const token = session?.access_token ?? ""
 
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | "">("")
+  const [currentPage, setCurrentPage] = useState(1)
+
   const { bookings, isLoading, error, refetch } = useAdminBookings(token, {
-    status: "pending_approval",
+    status: statusFilter || undefined,
     limit: 100,
   })
 
   const [carLabels, setCarLabels] = useState<Record<number, string>>({})
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
 
-  // Fetch car names for all bookings
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter])
+
+  // Fetch car names
   useEffect(() => {
     if (bookings.length === 0) return
     const uniqueIds = [...new Set(bookings.map((b) => b.carId))]
@@ -53,16 +71,43 @@ export default function BookingApprovalPage(): React.JSX.Element {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-gray-900">Booking Approval</h1>
+          <h1 className="text-2xl font-bold text-brand-gray-900">All Bookings</h1>
           <p className="body-3 mt-0.5 text-brand-gray-500">
-            Review and approve or reject pending booking requests.
+            Browse and inspect all customer bookings across every status.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2">
-          <span className="body-3 font-semibold text-amber-800">
-            {isLoading ? "…" : bookings.length} awaiting approval
-          </span>
-        </div>
+        <span className="body-3 text-brand-gray-500">
+          {isLoading ? "Loading…" : `${bookings.length} booking${bookings.length !== 1 ? "s" : ""}`}
+        </span>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <label htmlFor="statusFilter" className="body-3 font-medium text-brand-gray-700 sr-only">
+          Filter by status
+        </label>
+        <select
+          id="statusFilter"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as BookingStatus | "")}
+          className="rounded-lg border border-brand-gray-200 bg-white px-3 py-2 body-3 text-brand-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red-200"
+        >
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        {statusFilter && (
+          <button
+            type="button"
+            onClick={() => setStatusFilter("")}
+            className="body-3 text-brand-gray-500 hover:text-brand-gray-800 hover:underline"
+          >
+            Clear filter
+          </button>
+        )}
       </div>
 
       {/* Error */}

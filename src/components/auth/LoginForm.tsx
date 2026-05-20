@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { sanitizeInternalReturnUrl } from "@/lib/return-url";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -234,7 +235,7 @@ export default function LoginForm(): React.JSX.Element {
       const result = await signIn(parsed.data.email, parsed.data.password);
       if (result.role === "user") {
         // user role → แสดง modal countdown แล้ว redirect ไปหน้าหลัก หรือ returnUrl
-        setRedirectPath(returnUrl ?? "/");
+        setRedirectPath(sanitizeInternalReturnUrl(returnUrl, "/"));
         setShowSuccessModal(true);
       } else {
         // super_admin / branch_staff → redirect ทันที ไม่ต้อง modal
