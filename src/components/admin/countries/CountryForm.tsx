@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Clock, Globe, Hash, CircleDollarSign } from "lucide-react"
+import { Clock, Globe, Hash, CircleDollarSign, Shield } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TIMEZONE_OPTIONS } from "@/lib/constants/timezones"
 import type { Country, CreateCountryPayload } from "@/types/country"
@@ -19,6 +19,7 @@ interface FormErrors {
   code?: string
   currencyCode?: string
   timezone?: string
+  defaultDepositAmount?: string
 }
 
 export function CountryForm({
@@ -32,6 +33,11 @@ export function CountryForm({
   const [code, setCode] = useState(initialData?.code ?? "")
   const [currencyCode, setCurrencyCode] = useState(initialData?.currencyCode ?? "")
   const [timezone, setTimezone] = useState(initialData?.timezone ?? "")
+  const [defaultDepositAmount, setDefaultDepositAmount] = useState(
+    initialData?.defaultDepositAmount != null
+      ? String(initialData.defaultDepositAmount)
+      : "5000",
+  )
   const [errors, setErrors] = useState<FormErrors>({})
 
   function validate(): boolean {
@@ -41,6 +47,10 @@ export function CountryForm({
     if (currencyCode.trim().length !== 3)
       newErrors.currencyCode = "Must be exactly 3 characters (e.g. THB)"
     if (!timezone) newErrors.timezone = "Please select a timezone"
+    const deposit = Number(defaultDepositAmount)
+    if (!Number.isFinite(deposit) || deposit <= 0) {
+      newErrors.defaultDepositAmount = "Deposit must be greater than 0"
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -54,6 +64,7 @@ export function CountryForm({
       currencyCode: currencyCode.trim().toUpperCase(),
       timezone,
       isActive: initialData?.isActive ?? true,
+      defaultDepositAmount: Number(defaultDepositAmount),
     })
   }
 
@@ -184,6 +195,36 @@ export function CountryForm({
               <p className="body-3 text-red-500">{errors.timezone}</p>
             ) : (
               <p className="body-3 text-brand-gray-400">Main operating timezone for this country.</p>
+            )}
+          </div>
+
+          {/* Default deposit amount */}
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <label className="body-3 font-semibold text-brand-gray-700">
+              Default deposit amount
+            </label>
+            <div className="relative">
+              <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-gray-300" />
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={defaultDepositAmount}
+                onChange={(e) => setDefaultDepositAmount(e.target.value)}
+                placeholder="e.g. 5000"
+                className={`w-full rounded-lg border bg-white py-2.5 pl-10 pr-4 body-3 text-brand-gray-900 placeholder:text-brand-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red-200 focus:border-transparent transition-colors ${
+                  errors.defaultDepositAmount ? "border-red-400" : "border-brand-gray-200"
+                }`}
+              />
+            </div>
+            {errors.defaultDepositAmount ? (
+              <p className="body-3 text-red-500">{errors.defaultDepositAmount}</p>
+            ) : (
+              <p className="body-3 text-brand-gray-400">
+                Hold amount for new bookings in{" "}
+                {currencyCode.trim() ? currencyCode.toUpperCase() : "local currency"} (authorized at
+                checkout, released after return).
+              </p>
             )}
           </div>
         </div>

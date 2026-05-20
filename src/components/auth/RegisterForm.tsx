@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -187,6 +187,8 @@ function TrustBadges(): React.JSX.Element {
 
 export default function RegisterForm(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
   const { register } = useAuth();
 
   const [fields, setFields] = useState<FormFields>({
@@ -252,7 +254,9 @@ export default function RegisterForm(): React.JSX.Element {
         firstName: parsed.data.firstName,
         lastName: parsed.data.lastName,
       });
-      router.push("/customer");
+      // ถ้ามี returnUrl (มาจาก checkout guest flow) → กลับไปหน้านั้น
+      // ถ้าไม่มี → ไปหน้า login (user ทั่วไป register แล้วให้ sign in)
+      router.push(returnUrl ?? "/login");
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Something went wrong. Try again.";

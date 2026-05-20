@@ -518,17 +518,23 @@ export default function BookingList(): React.JSX.Element {
 
 The pricing engine MUST follow these rules exactly — this is a core feature evaluated by the reviewer:
 
+- Two rates: **hourly** and **daily**
+- If usage **exceeds 8 hours** → count as **1 full day**
+- If return time is **after 14:00** (strictly past 14:00; **14:00 sharp does not count**) → that day counts as **1 full day**
+- Multi-day: after each full day, hourly counting **resets at pickup time** on the next day (not midnight)
+
 ```typescript
 // src/utils/pricing.ts
 
-// Rule 1: Return after 14:00 = full day (highest priority, overrides all)
-// Rule 2: Usage > 8 hours = 1 full day
+// Rule 1: Return AFTER 14:00 (not at 14:00) → 1 full day for that period
+// Rule 2: Usage > 8 hours (strictly) → 1 full day
 // Rule 3: Multi-day — hourly counter resets at pickup time each day (not midnight)
 
-// Example:
-// Pickup 10:00, Return 15:00 same day → 1 day (Rule 1: after 14:00)
-// Pickup 10:00, Return 18:00 same day → 1 day (Rule 2: > 8 hours)
-// Pickup 10:00 Day1, Return 11:00 Day2 → 1 day + 1 hour (Rule 3)
+// Reviewer examples:
+// 10:00 → 12:00 same day → 2 hours
+// 10:00 → 15:00 same day → 1 day (return after 14:00)
+// 10:00 → 14:00 same day → 4 hours (not after 14:00, under 8 h)
+// 10:00 Day1 → 11:00 Day2 → 1 day + 1 hour
 
 // All datetime calculations MUST use the branch's timezone (dayjs-timezone)
 ```

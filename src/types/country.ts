@@ -5,6 +5,7 @@ export interface Country {
   currencyCode: string
   timezone: string
   isActive: boolean
+  defaultDepositAmount: string
   createdAt: string
   updatedAt: string
 }
@@ -15,6 +16,7 @@ export interface CreateCountryPayload {
   currencyCode: string
   timezone: string
   isActive: boolean
+  defaultDepositAmount: number
 }
 
 export type UpdateCountryPayload = Partial<CreateCountryPayload>
