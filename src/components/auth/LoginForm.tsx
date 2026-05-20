@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -168,6 +168,8 @@ function Divider(): React.JSX.Element {
 
 export default function LoginForm(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -231,8 +233,8 @@ export default function LoginForm(): React.JSX.Element {
     try {
       const result = await signIn(parsed.data.email, parsed.data.password);
       if (result.role === "user") {
-        // user role → แสดง modal countdown ก่อน redirect ไปหน้าหลัก
-        setRedirectPath("/");
+        // user role → แสดง modal countdown แล้ว redirect ไปหน้าหลัก หรือ returnUrl
+        setRedirectPath(returnUrl ?? "/");
         setShowSuccessModal(true);
       } else {
         // super_admin / branch_staff → redirect ทันที ไม่ต้อง modal

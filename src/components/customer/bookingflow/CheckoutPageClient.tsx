@@ -19,7 +19,6 @@ import { useAuth } from "@/contexts/auth-context"
 import { useBookingStore } from "@/stores/bookingStore"
 import type { Car } from "@/types/car"
 import type { CarAddon } from "@/types/car-addon"
-import type { PricingPreviewResult } from "@/types/pricing"
 import { previewPricing } from "@/lib/api/pricing"
 import { createBooking } from "@/lib/api/bookings"
 import { getMyProfile, updateMyProfile } from "@/lib/api/auth"
@@ -77,6 +76,7 @@ interface CheckoutPageClientProps {
   pickupTimezone: string
   searchQuery: string
   currencyCode: string
+  isDifferentBranch: boolean
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────────
@@ -94,6 +94,7 @@ export default function CheckoutPageClient({
   pickupTimezone,
   searchQuery,
   currencyCode,
+  isDifferentBranch,
 }: CheckoutPageClientProps): React.JSX.Element {
   const router = useRouter()
   const { session, isInitialized } = useAuth()
@@ -274,7 +275,7 @@ export default function CheckoutPageClient({
           ← Back to vehicle details
         </a>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
           {/* ─── Left column: Form ───────────────────────────────── */}
           <div className="flex flex-col gap-8">
             {/* Your Information */}
@@ -372,7 +373,7 @@ export default function CheckoutPageClient({
               </div>
             )}
 
-            {/* Book Now (mobile — hidden on lg, shown here) */}
+            {/* Book Now (mobile only — on lg it lives inside sticky sidebar) */}
             <div className="lg:hidden">
               <Button
                 variant="primary"
@@ -393,8 +394,8 @@ export default function CheckoutPageClient({
             </div>
           </div>
 
-          {/* ─── Right column: Pricing sidebar ──────────────────── */}
-          <div className="flex flex-col gap-4">
+          {/* ─── Right column: Pricing sidebar (sticky, Book Now included) ─── */}
+          <div className="hidden lg:block">
             <PricingSidebar
               car={car}
               pickupBranchName={pickupBranchName}
@@ -404,27 +405,24 @@ export default function CheckoutPageClient({
               timezone={pickupTimezone}
               pricing={pricingPreview}
               isLoading={pricingLoading}
+              isDifferentBranch={isDifferentBranch}
+              onBookNow={handleBookNow}
+              isSubmitting={submitting}
             />
-
-            {/* Book Now (desktop) */}
-            <div className="hidden lg:block">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center"
-                onClick={handleBookNow}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                    Submitting…
-                  </>
-                ) : (
-                  "Book Now"
-                )}
-              </Button>
-            </div>
+          </div>
+          {/* Mobile: sidebar ไม่ sticky — แสดงด้านล่างฟอร์ม (ไม่มีปุ่ม Book Now ซ้ำ) */}
+          <div className="lg:hidden">
+            <PricingSidebar
+              car={car}
+              pickupBranchName={pickupBranchName}
+              dropoffBranchName={dropoffBranchName}
+              pickupDatetime={pickupDatetime}
+              dropoffDatetime={dropoffDatetime}
+              timezone={pickupTimezone}
+              pricing={pricingPreview}
+              isLoading={pricingLoading}
+              isDifferentBranch={isDifferentBranch}
+            />
           </div>
         </div>
       </main>

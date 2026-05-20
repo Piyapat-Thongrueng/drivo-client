@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -17,7 +18,10 @@ export default function LoginPage(): React.JSX.Element {
 
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <LoginForm />
+          {/* Suspense required for useSearchParams inside LoginForm */}
+          <Suspense>
+            <LoginForm />
+          </Suspense>
         </div>
       </main>
 

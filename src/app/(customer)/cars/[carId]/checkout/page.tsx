@@ -61,6 +61,11 @@ export default async function CheckoutPage({
       ? search.dropoffBranchName
       : search.pickupBranchName
 
+  const isDifferentBranch =
+    search.differentDropoff &&
+    !!search.dropoffBranchId &&
+    search.dropoffBranchId !== search.pickupBranchId
+
   if (!search.pickupBranchId) notFound()
 
   return (
@@ -77,6 +82,7 @@ export default async function CheckoutPage({
       pickupTimezone={search.pickupTimezone}
       searchQuery={currentQueryString}
       currencyCode={currencyCode}
+      isDifferentBranch={isDifferentBranch}
     />
   )
 }

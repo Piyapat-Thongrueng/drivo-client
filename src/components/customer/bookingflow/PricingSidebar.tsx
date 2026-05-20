@@ -6,6 +6,7 @@ import type { Car } from "@/types/car"
 import type { PricingPreviewResult } from "@/types/pricing"
 import { formatCurrency } from "@/lib/currency"
 import { formatDatetimeInTz } from "@/lib/datetime"
+import { Button } from "@/components/ui/Button"
 
 interface PricingSidebarProps {
   car: Car
@@ -16,6 +17,11 @@ interface PricingSidebarProps {
   timezone: string
   pricing: PricingPreviewResult | null
   isLoading?: boolean
+  /** true เมื่อ pickup ≠ dropoff branch — แสดงแถว one-way fee เสมอ */
+  isDifferentBranch?: boolean
+  /** ส่งมาเพื่อให้ปุ่ม Book Now อยู่ใน sidebar (sticky ด้วยกัน) */
+  onBookNow?: () => void
+  isSubmitting?: boolean
 }
 
 export default function PricingSidebar({
@@ -27,6 +33,9 @@ export default function PricingSidebar({
   timezone,
   pricing,
   isLoading,
+  isDifferentBranch = false,
+  onBookNow,
+  isSubmitting,
 }: PricingSidebarProps): React.JSX.Element {
   const currencyCode = pricing?.currencyCode ?? "THB"
 
@@ -45,7 +54,13 @@ export default function PricingSidebar({
             />
           ) : (
             <div className="flex h-full items-center justify-center text-brand-gray-300">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 opacity-30" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 opacity-30"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
                 <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z" />
               </svg>
             </div>
@@ -53,7 +68,9 @@ export default function PricingSidebar({
         </div>
         <div>
           <p className="body-3 text-brand-gray-500">{car.year}</p>
-          <p className="body-1 font-bold text-brand-gray-900">{car.make} {car.model}</p>
+          <p className="body-1 font-bold text-brand-gray-900">
+            {car.make} {car.model}
+          </p>
         </div>
       </div>
 
@@ -61,22 +78,30 @@ export default function PricingSidebar({
       <div className="flex flex-col gap-1.5 border-t border-brand-gray-100 pt-4">
         <div className="flex items-center gap-2">
           <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-red-200" aria-hidden />
-          <span className="body-3 font-semibold text-brand-gray-800">{pickupBranchName || "—"}</span>
+          <span className="body-3 font-semibold text-brand-gray-800">
+            {pickupBranchName || "—"}
+          </span>
         </div>
         <div className="ml-1 flex items-center gap-2">
           <Calendar className="h-3.5 w-3.5 shrink-0 text-brand-gray-400" aria-hidden />
-          <span className="body-3 text-brand-gray-600">{formatDatetimeInTz(pickupDatetime, timezone)}</span>
+          <span className="body-3 text-brand-gray-600">
+            {formatDatetimeInTz(pickupDatetime, timezone)}
+          </span>
         </div>
         <div className="flex items-center gap-2 py-0.5">
           <ArrowRight className="h-3.5 w-3.5 shrink-0 text-brand-gray-300" aria-hidden />
         </div>
         <div className="flex items-center gap-2">
           <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-red-200" aria-hidden />
-          <span className="body-3 font-semibold text-brand-gray-800">{dropoffBranchName || pickupBranchName || "—"}</span>
+          <span className="body-3 font-semibold text-brand-gray-800">
+            {dropoffBranchName || pickupBranchName || "—"}
+          </span>
         </div>
         <div className="ml-1 flex items-center gap-2">
           <Calendar className="h-3.5 w-3.5 shrink-0 text-brand-gray-400" aria-hidden />
-          <span className="body-3 text-brand-gray-600">{formatDatetimeInTz(dropoffDatetime, timezone)}</span>
+          <span className="body-3 text-brand-gray-600">
+            {formatDatetimeInTz(dropoffDatetime, timezone)}
+          </span>
         </div>
       </div>
 
@@ -100,11 +125,27 @@ export default function PricingSidebar({
             />
 
             {pricing.addonAmount > 0 && (
-              <PriceRow label="Add-ons" amount={pricing.addonAmount} currencyCode={currencyCode} />
+              <PriceRow
+                label="Add-ons"
+                amount={pricing.addonAmount}
+                currencyCode={currencyCode}
+              />
             )}
 
-            {pricing.oneWayFee > 0 && (
-              <PriceRow label="One-way fee" amount={pricing.oneWayFee} currencyCode={currencyCode} />
+            {/* One-way fee: แสดงเสมอถ้าเป็น different branch — ถ้า fee=0 แสดง "Included" */}
+            {isDifferentBranch && (
+              pricing.oneWayFee > 0 ? (
+                <PriceRow
+                  label="One-way surcharge"
+                  amount={pricing.oneWayFee}
+                  currencyCode={currencyCode}
+                />
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="body-3 text-brand-gray-600">One-way surcharge</span>
+                  <span className="body-3 font-medium text-brand-gray-400">Included</span>
+                </div>
+              )
             )}
 
             {/* Rental total */}
@@ -118,8 +159,12 @@ export default function PricingSidebar({
             {/* Deposit (hold) */}
             <div className="flex items-start justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2">
               <div>
-                <p className="body-3 font-semibold text-amber-800">Security deposit (hold)</p>
-                <p className="body-3 text-amber-600">Not charged — released after return</p>
+                <p className="body-3 font-semibold text-amber-800">
+                  Security deposit (hold)
+                </p>
+                <p className="body-3 text-amber-600">
+                  Not charged — released after return
+                </p>
               </div>
               <span className="body-3 shrink-0 font-bold text-amber-800">
                 {formatCurrency(pricing.depositAmount, currencyCode)}
@@ -127,9 +172,31 @@ export default function PricingSidebar({
             </div>
           </>
         ) : (
-          <p className="body-3 text-brand-gray-400 italic">Pricing will appear here.</p>
+          <p className="body-3 italic text-brand-gray-400">Pricing will appear here.</p>
         )}
       </div>
+
+      {/* Book Now button — sticky ไปกับ sidebar บน desktop */}
+      {onBookNow && (
+        <div className="border-t border-brand-gray-100 pt-4">
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full justify-center"
+            onClick={onBookNow}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                Submitting…
+              </>
+            ) : (
+              "Book Now"
+            )}
+          </Button>
+        </div>
+      )}
     </aside>
   )
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import { MapPin, Calendar, ArrowRight, Users, Briefcase, Fuel, Settings2, Info } from "lucide-react"
+import { MapPin, Calendar, ArrowRight, Users, Briefcase, Fuel, Settings2, Info, DoorOpen, Palette } from "lucide-react"
 
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
@@ -233,6 +233,7 @@ export default async function CarDetailPage({
             <div className="flex flex-wrap gap-4">
               <SpecRow icon={<Users className="h-4 w-4" />} label={`${car.seats} seats`} />
               <SpecRow icon={<Briefcase className="h-4 w-4" />} label={`${car.luggageCapacity} bags`} />
+              <SpecRow icon={<DoorOpen className="h-4 w-4" />} label={`${car.doors} doors`} />
               <SpecRow
                 icon={<Settings2 className="h-4 w-4" />}
                 label={car.transmission === "auto" ? "Automatic" : "Manual"}
@@ -241,6 +242,12 @@ export default async function CarDetailPage({
                 icon={<Fuel className="h-4 w-4" />}
                 label={car.fuelType.charAt(0).toUpperCase() + car.fuelType.slice(1)}
               />
+              {car.color && (
+                <SpecRow
+                  icon={<Palette className="h-4 w-4" />}
+                  label={car.color.charAt(0).toUpperCase() + car.color.slice(1)}
+                />
+              )}
             </div>
 
             {/* คำอธิบาย */}
