@@ -1,19 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, Headset, Lock, Mail, ShieldCheck } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Headset,
+  Lock,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
 
+import { sanitizeInternalReturnUrl } from "@/lib/return-url";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  flattenZodFieldErrors,
+  loginFormSchema,
+} from "@/lib/validation/auth-forms";
+import LoginSuccessModal from "@/components/auth/LoginSuccessModal";
 
 // --- Sub-components ---
 
 interface EmailInputProps {
   value: string;
   onChange: (value: string) => void;
+  error?: string;
 }
 
-function EmailInput({ value, onChange }: EmailInputProps): React.JSX.Element {
+function EmailInput({
+  value,
+  onChange,
+  error,
+}: EmailInputProps): React.JSX.Element {
+  const invalid = Boolean(error);
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor="email" className="body-3 font-semibold text-brand-gray-900">
@@ -29,10 +51,22 @@ function EmailInput({ value, onChange }: EmailInputProps): React.JSX.Element {
           value={value}
           placeholder="name@example.com"
           autoComplete="email"
+          maxLength={254}
+          aria-invalid={invalid}
+          aria-describedby={invalid ? "email-error" : undefined}
           onChange={(e) => onChange(e.target.value)}
-          className="body-2 w-full rounded-xl border border-brand-gray-300 bg-brand-white py-3 pl-10 pr-4 text-brand-gray-900 placeholder:text-brand-gray-500 transition-colors focus:border-brand-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-gray-700"
+          className={`body-2 w-full rounded-xl border bg-brand-white py-3 pl-10 pr-4 text-brand-gray-900 placeholder:text-brand-gray-500 transition-colors focus:outline-none focus:ring-1 ${
+            invalid
+              ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+              : "border-brand-gray-300 focus:border-brand-gray-700 focus:ring-brand-gray-700"
+          }`}
         />
       </div>
+      {error ? (
+        <p id="email-error" className="body-3 text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -40,10 +74,16 @@ function EmailInput({ value, onChange }: EmailInputProps): React.JSX.Element {
 interface PasswordInputProps {
   value: string;
   onChange: (value: string) => void;
+  error?: string;
 }
 
-function PasswordInput({ value, onChange }: PasswordInputProps): React.JSX.Element {
+function PasswordInput({
+  value,
+  onChange,
+  error,
+}: PasswordInputProps): React.JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
+  const invalid = Boolean(error);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -51,7 +91,6 @@ function PasswordInput({ value, onChange }: PasswordInputProps): React.JSX.Eleme
         <label htmlFor="password" className="body-3 font-semibold text-brand-gray-900">
           Password
         </label>
-        {/* Forgot password link — goes to / until that route exists */}
         <Link
           href="/"
           className="body-3 font-semibold text-brand-red-200 hover:underline"
@@ -69,8 +108,15 @@ function PasswordInput({ value, onChange }: PasswordInputProps): React.JSX.Eleme
           value={value}
           placeholder="••••••••"
           autoComplete="current-password"
+          maxLength={128}
+          aria-invalid={invalid}
+          aria-describedby={invalid ? "password-error" : undefined}
           onChange={(e) => onChange(e.target.value)}
-          className="body-2 w-full rounded-xl border border-brand-gray-300 bg-brand-white py-3 pl-10 pr-12 text-brand-gray-900 placeholder:text-brand-gray-500 transition-colors focus:border-brand-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-gray-700"
+          className={`body-2 w-full rounded-xl border bg-brand-white py-3 pl-10 pr-12 text-brand-gray-900 placeholder:text-brand-gray-500 transition-colors focus:outline-none focus:ring-1 ${
+            invalid
+              ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+              : "border-brand-gray-300 focus:border-brand-gray-700 focus:ring-brand-gray-700"
+          }`}
         />
         <button
           type="button"
@@ -85,6 +131,11 @@ function PasswordInput({ value, onChange }: PasswordInputProps): React.JSX.Eleme
           )}
         </button>
       </div>
+      {error ? (
+        <p id="password-error" className="body-3 text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -117,26 +168,99 @@ function Divider(): React.JSX.Element {
 // --- Main Component ---
 
 export default function LoginForm(): React.JSX.Element {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+  const { signIn } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  /** แสดง modal สำเร็จ (เฉพาะ role user) */
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("/");
+  /** Prevents double submit before React disables the button. */
+  const loginInFlightRef = useRef(false);
 
-  const canSubmit = email.trim() !== "" && password.length > 0;
+  const formValues = useMemo(() => ({ email, password }), [email, password]);
+
+  const canSubmit = useMemo(() => {
+    return loginFormSchema.safeParse(formValues).success;
+  }, [formValues]);
+
+  function updateEmail(v: string): void {
+    setEmail(v);
+    setFieldErrors((p) => {
+      const n = { ...p };
+      delete n.email;
+      return n;
+    });
+    setSubmitError(null);
+  }
+
+  function updatePassword(v: string): void {
+    setPassword(v);
+    setFieldErrors((p) => {
+      const n = { ...p };
+      delete n.password;
+      return n;
+    });
+    setSubmitError(null);
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
+    if (loginInFlightRef.current) {
+      return;
+    }
+    setSubmitError(null);
+
+    const parsed = loginFormSchema.safeParse(formValues);
+    if (!parsed.success) {
+      setFieldErrors(flattenZodFieldErrors(parsed.error));
+      return;
+    }
+
+    setFieldErrors({});
+    loginInFlightRef.current = true;
     setIsLoading(true);
     try {
-      // TODO: call Supabase auth.signInWithPassword() or POST clientApi
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await signIn(parsed.data.email, parsed.data.password);
+      if (result.role === "user") {
+        // user role → แสดง modal countdown แล้ว redirect ไปหน้าหลัก หรือ returnUrl
+        setRedirectPath(sanitizeInternalReturnUrl(returnUrl, "/"));
+        setShowSuccessModal(true);
+      } else {
+        // super_admin / branch_staff → redirect ทันที ไม่ต้อง modal
+        router.push(result.defaultPath);
+      }
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Invalid user credentials or user not found.";
+      setSubmitError(message);
     } finally {
+      loginInFlightRef.current = false;
       setIsLoading(false);
     }
   }
 
+  const handleModalConfirm = useCallback((): void => {
+    router.push(redirectPath);
+  }, [router, redirectPath]);
+
   return (
+    <>
+      {/* Modal ขึ้นด้านบนสุด — แสดงหลัง sign in สำเร็จ (role user) */}
+      {showSuccessModal && (
+        <LoginSuccessModal onConfirm={handleModalConfirm} />
+      )}
     <div className="w-full rounded-2xl border border-brand-gray-100 bg-brand-white px-6 py-10 shadow-sm sm:px-10">
       {/* Heading */}
       <div className="mb-8 text-center">
@@ -147,8 +271,20 @@ export default function LoginForm(): React.JSX.Element {
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <EmailInput value={email} onChange={setEmail} />
-        <PasswordInput value={password} onChange={setPassword} />
+        {submitError ? (
+          <p
+            className="body-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-medium text-red-600"
+            role="alert"
+          >
+            {submitError}
+          </p>
+        ) : null}
+        <EmailInput value={email} onChange={updateEmail} error={fieldErrors.email} />
+        <PasswordInput
+          value={password}
+          onChange={updatePassword}
+          error={fieldErrors.password}
+        />
 
         <Button
           type="submit"
@@ -181,5 +317,6 @@ export default function LoginForm(): React.JSX.Element {
         <TrustBadges />
       </div>
     </div>
+    </>
   );
 }
