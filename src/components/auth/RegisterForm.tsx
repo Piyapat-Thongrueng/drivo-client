@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { sanitizeInternalReturnUrl } from "@/lib/return-url";
+import ReturnToHomeButton from "@/components/auth/ReturnToHomeButton";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -381,15 +382,19 @@ export default function RegisterForm(): React.JSX.Element {
       </form>
 
       {/* Sign-in link */}
-      <p className="body-3 mt-6 text-center text-brand-gray-600">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-brand-red-200 hover:underline"
-        >
-          Sign In
-        </Link>
-      </p>
+      <div className="mt-6 flex flex-col gap-4">
+        <p className="body-3 text-center text-brand-gray-600">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-brand-red-200 hover:underline"
+          >
+            Sign In
+          </Link>
+        </p>
+
+        <ReturnToHomeButton />
+      </div>
 
       {/* Trust badges */}
       <div className="mt-8">

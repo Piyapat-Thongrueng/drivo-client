@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import HomeScrollToSearch from "@/components/customer/landing/HomeScrollToSearch";
 import HeroSection from "@/components/customer/landing/HeroSection";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -17,9 +18,16 @@ export default function HomePage(): React.JSX.Element {
   return (
     <>
       <Navbar />
+      <HomeScrollToSearch />
       <main className="flex flex-1 flex-col">
         <HeroSection />
-        <VehicleSearchBar />
+        <section
+          id="vehicle-search"
+          className="scroll-mt-20 sm:scroll-mt-18"
+          aria-label="Search and filter vehicles"
+        >
+          <VehicleSearchBar />
+        </section>
         <WhyChooseDrivo />
         <GlobalPresence />
       </main>

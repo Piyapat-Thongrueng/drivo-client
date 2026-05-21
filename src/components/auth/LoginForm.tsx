@@ -21,6 +21,7 @@ import {
   loginFormSchema,
 } from "@/lib/validation/auth-forms";
 import LoginSuccessModal from "@/components/auth/LoginSuccessModal";
+import ReturnToHomeButton from "@/components/auth/ReturnToHomeButton";
 
 // --- Sub-components ---
 
@@ -87,17 +88,9 @@ function PasswordInput({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <label htmlFor="password" className="body-3 font-semibold text-brand-gray-900">
-          Password
-        </label>
-        <Link
-          href="/"
-          className="body-3 font-semibold text-brand-red-200 hover:underline"
-        >
-          Forgot?
-        </Link>
-      </div>
+      <label htmlFor="password" className="body-3 font-semibold text-brand-gray-900">
+        Password
+      </label>
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray-500">
           <Lock className="h-4 w-4" aria-hidden />
@@ -310,6 +303,8 @@ export default function LoginForm(): React.JSX.Element {
             Create Account
           </Link>
         </p>
+
+        <ReturnToHomeButton />
       </div>
 
       {/* Trust badges */}

@@ -29,7 +29,31 @@ const CITY_CARDS: readonly CityCard[] = [
     imageSrc: "/cities/London.png",
     imageAlt: "London skyline with historic architecture along the river",
   },
+  {
+    name: "New York",
+    description:
+      "Cruise past iconic towers and the energy of America's greatest metropolis.",
+    imageSrc: "/cities/NY.jpg",
+    imageAlt: "Lower Manhattan skyline and One World Trade Center at golden hour",
+  },
+  {
+    name: "Osaka",
+    description:
+      "Dive into street food, canal walks, and the electric heart of Kansai.",
+    imageSrc: "/cities/Osaka.png",
+    imageAlt: "Dotonbori canal in Osaka with famous Glico sign and neon billboards",
+  },
+  {
+    name: "Taipei",
+    description:
+      "Watch sunset glow over Taipei 101 and explore night markets after dark.",
+    imageSrc: "/cities/Taipei.jpg",
+    imageAlt: "Taipei skyline with Taipei 101 tower at sunset",
+  },
 ] as const;
+
+/** ทำสำเนาสองชุดเพื่อเลื่อนวนลูปไม่สะดุด */
+const MARQUEE_CITIES = [...CITY_CARDS, ...CITY_CARDS] as const;
 
 interface CityCardItemProps {
   card: CityCard;
@@ -37,13 +61,13 @@ interface CityCardItemProps {
 
 function CityCardItem({ card }: CityCardItemProps): React.JSX.Element {
   return (
-    <li className="flex flex-col overflow-hidden rounded-2xl bg-brand-white shadow-[0_4px_24px_rgba(58,59,70,0.08)] ring-1 ring-brand-gray-100/80">
+    <article className="flex w-[min(100%,20rem)] shrink-0 flex-col overflow-hidden rounded-2xl bg-brand-white shadow-[0_4px_24px_rgba(58,59,70,0.08)] ring-1 ring-brand-gray-100/80 sm:w-80">
       <div className="relative aspect-video w-full shrink-0">
         <Image
           src={card.imageSrc}
           alt={card.imageAlt}
           fill
-          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
+          sizes="320px"
           className="object-cover"
         />
       </div>
@@ -51,7 +75,7 @@ function CityCardItem({ card }: CityCardItemProps): React.JSX.Element {
         <h3 className="headline-3 text-brand-gray-900">{card.name}</h3>
         <p className="body-2 mt-3 text-brand-gray-700">{card.description}</p>
       </div>
-    </li>
+    </article>
   );
 }
 
@@ -59,7 +83,7 @@ export default function GlobalPresence(): React.JSX.Element {
   return (
     <section
       aria-labelledby="global-presence-heading"
-      className="bg-brand-gray-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+      className="overflow-hidden bg-brand-gray-50 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 sm:pb-20 lg:px-8 lg:pb-24"
     >
       <div className="mx-auto max-w-7xl">
         <header className="max-w-2xl text-left">
@@ -73,12 +97,32 @@ export default function GlobalPresence(): React.JSX.Element {
             Explore our branches across the world&apos;s most vibrant cities.
           </p>
         </header>
+      </div>
 
-        <ul className="mt-10 grid list-none grid-cols-1 gap-6 sm:mt-12 md:grid-cols-2 md:gap-8 lg:mt-14 lg:grid-cols-3 lg:gap-8">
-          {CITY_CARDS.map((card) => (
-            <CityCardItem key={card.name} card={card} />
-          ))}
-        </ul>
+      {/* เลื่อนไปทางซ้าย — วนลูปไม่สิ้นสุด */}
+      <div
+        className="relative mt-10 sm:mt-12 lg:mt-14"
+        aria-label="Cities we serve"
+      >
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-linear-to-r from-brand-gray-50 to-transparent sm:w-16"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-linear-to-l from-brand-gray-50 to-transparent sm:w-16"
+          aria-hidden
+        />
+
+        <div className="overflow-hidden">
+          <div className="global-presence-marquee flex w-max gap-6 px-4 sm:gap-8 sm:px-6 lg:px-8">
+            {MARQUEE_CITIES.map((card, index) => (
+              <CityCardItem
+                key={`${card.name}-${index}`}
+                card={card}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

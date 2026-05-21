@@ -202,6 +202,34 @@ body {
 
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global Presence — เลื่อนการ์ดเมืองไปทางซ้ายแบบวนลูป */
+@keyframes global-presence-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.global-presence-marquee {
+  animation: global-presence-marquee 50s linear infinite;
+}
+
+.global-presence-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-presence-marquee {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

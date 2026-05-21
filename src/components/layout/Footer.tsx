@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { CircleHelp, Globe, ShieldCheck } from "lucide-react";
 
-/** Placeholder until real routes exist — all footer links go home per product decision. */
+import { scrollToPageTop } from "@/lib/landing-scroll";
+
+/** Placeholder until real routes exist — links stay on home and scroll to top */
 const HOME = "/" as const;
 
 interface FooterLink {
@@ -41,11 +46,26 @@ const FOOTER_COLUMNS: readonly FooterColumn[] = [
   },
 ] as const;
 
+function useScrollHomeLink() {
+  const pathname = usePathname();
+
+  return function handleHomeNavClick(
+    event: React.MouseEvent<HTMLAnchorElement>,
+  ): void {
+    if (pathname !== HOME) return;
+    event.preventDefault();
+    scrollToPageTop();
+  };
+}
+
 function FooterLinkItem({ link }: { link: FooterLink }): React.JSX.Element {
+  const onHomeNavClick = useScrollHomeLink();
+
   return (
     <li>
       <Link
         href={link.href}
+        onClick={onHomeNavClick}
         className="body-3 text-brand-gray-700 transition-colors hover:text-brand-red-200"
       >
         {link.label}
@@ -68,15 +88,17 @@ function FooterColumnBlock({ column }: { column: FooterColumn }): React.JSX.Elem
 }
 
 interface IconLinkProps {
-  href: typeof HOME;
   label: string;
   children: React.ReactNode;
 }
 
-function IconLink({ href, label, children }: IconLinkProps): React.JSX.Element {
+function IconLink({ label, children }: IconLinkProps): React.JSX.Element {
+  const onHomeNavClick = useScrollHomeLink();
+
   return (
     <Link
-      href={href}
+      href={HOME}
+      onClick={onHomeNavClick}
       aria-label={label}
       className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-gray-300 text-brand-gray-700 transition-colors hover:border-brand-gray-500 hover:text-brand-gray-900"
     >
@@ -86,6 +108,8 @@ function IconLink({ href, label, children }: IconLinkProps): React.JSX.Element {
 }
 
 export default function Footer(): React.JSX.Element {
+  const onHomeNavClick = useScrollHomeLink();
+
   return (
     <footer className="border-t border-brand-gray-100 bg-brand-gray-200">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
@@ -93,6 +117,7 @@ export default function Footer(): React.JSX.Element {
           <div className="max-w-md md:col-span-2 lg:col-span-1 lg:max-w-none">
             <Link
               href={HOME}
+              onClick={onHomeNavClick}
               className="headline-4 font-bold text-brand-red-200 transition-opacity hover:opacity-90"
             >
               Drivo
@@ -113,13 +138,13 @@ export default function Footer(): React.JSX.Element {
             © {new Date().getFullYear()} Drivo Car Rentals. All rights reserved.
           </p>
           <div className="flex items-center gap-3 sm:shrink-0">
-            <IconLink href={HOME} label="Language and region (coming soon)">
+            <IconLink label="Language and region (coming soon)">
               <Globe className="h-5 w-5" aria-hidden />
             </IconLink>
-            <IconLink href={HOME} label="Security and trust (coming soon)">
+            <IconLink label="Security and trust (coming soon)">
               <ShieldCheck className="h-5 w-5" aria-hidden />
             </IconLink>
-            <IconLink href={HOME} label="Help (coming soon)">
+            <IconLink label="Help (coming soon)">
               <CircleHelp className="h-5 w-5" aria-hidden />
             </IconLink>
           </div>

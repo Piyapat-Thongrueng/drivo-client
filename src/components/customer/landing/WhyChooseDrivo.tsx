@@ -64,7 +64,7 @@ export default function WhyChooseDrivo(): React.JSX.Element {
   return (
     <section
       aria-labelledby="why-choose-heading"
-      className="bg-brand-gray-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="bg-brand-gray-50 px-4 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 lg:px-8"
     >
       {/* Heading block */}
       <div className="mx-auto max-w-2xl text-center">

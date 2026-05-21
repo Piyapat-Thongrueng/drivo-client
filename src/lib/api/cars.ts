@@ -1,5 +1,6 @@
 import axios from "axios"
 import type { Car, CarDetail, CreateCarPayload, UpdateCarPayload } from "@/types/car"
+import type { FleetCar } from "@/types/fleet"
 import { publicApiUrl } from "./base-url"
 
 function authHeader(token: string) {
@@ -67,6 +68,27 @@ export async function deleteCar(id: number, token: string): Promise<void> {
   await axios.delete(publicApiUrl(`/api/cars/${id}`), {
     headers: authHeader(token),
   })
+}
+
+// ─── Fleet catalog (Our fleet page) ──────────────────────────────────────────
+
+function normalizeFleetCar(raw: FleetCar): FleetCar {
+  return {
+    ...raw,
+    id: num(raw.id),
+    branchId: num(raw.branchId),
+    currentBranchId: num(raw.currentBranchId),
+    countryId: num(raw.countryId),
+  }
+}
+
+/** GET /api/cars/fleet — รถทั้งหมด แยกตามประเทศ (public) */
+export async function fetchFleetCars(countryId?: number): Promise<FleetCar[]> {
+  const query = countryId ? `?countryId=${countryId}` : ""
+  const { data } = await axios.get<{ success: boolean; data: FleetCar[] }>(
+    publicApiUrl(`/api/cars/fleet${query}`),
+  )
+  return data.data.map(normalizeFleetCar)
 }
 
 // ─── Available Cars (Customer) ───────────────────────────────────────────────
