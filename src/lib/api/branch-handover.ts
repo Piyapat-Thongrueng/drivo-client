@@ -57,24 +57,30 @@ export async function getReturnQueue(
 
 // ─── Booking detail (for handover form) ──────────────────────────────────────
 
+/** Shape returned by GET /api/branch/bookings/:id (matches server BookingDetailForHandover) */
 export interface HandoverBookingDetail {
   bookingId: number
   reference: string
-  customerFirstName: string
-  customerLastName: string
-  customerPhone: string | null
-  carMake: string
-  carModel: string
-  carYear: number
-  licensePlate: string
+  status: string
+  pickupBranchId: number
+  dropoffBranchId: number
+  depositAmount: string
+  currencyCode: string
+  carId: number
+  customer: { firstName: string; lastName: string; phone: string | null }
+  car: { make: string; model: string; year: number; licensePlate: string }
   pickupBranchName: string
   dropoffBranchName: string
   pickupDatetime: string
   dropoffDatetime: string
-  depositAmount: string
-  currencyCode: string
   addons: Array<{ name: string; totalPrice: string }>
-  existingHandovers: HandoverWithPhotos[]
+  handovers: Array<{
+    id: number
+    type: string
+    fuelLevel: string
+    extraCharge: string
+    photos: Array<{ id: number; url: string; angle: string | null }>
+  }>
 }
 
 /** GET /api/branch/bookings/:id — ข้อมูล booking สำหรับฟอร์มส่งมอบ/รับคืน */
