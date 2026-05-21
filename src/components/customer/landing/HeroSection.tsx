@@ -142,7 +142,7 @@ export default function HeroSection(): React.JSX.Element {
 
         <div className="pointer-events-auto mt-8 flex w-full max-w-md flex-col gap-3 sm:mt-10 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4 md:mt-12">
           <Button
-            href="/booking"
+            href="#vehicle-search"
             variant="primary"
             size="lg"
             className="w-full min-w-44 sm:w-auto sm:min-w-42"
@@ -150,7 +150,7 @@ export default function HeroSection(): React.JSX.Element {
             Book Now
           </Button>
           <Button
-            href="#how-to-book"
+            href="#vehicle-search"
             variant="secondary"
             size="lg"
             className="w-full min-w-44 sm:w-auto sm:min-w-42"

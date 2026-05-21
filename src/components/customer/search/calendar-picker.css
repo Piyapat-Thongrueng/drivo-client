@@ -1,0 +1,27 @@
+/* ปรับ react-day-picker ให้เข้ากับ brand Drivo */
+.drivo-day-picker .rdp-root {
+  --rdp-accent-color: #a6001f;
+  --rdp-accent-background-color: #fff1f0;
+  --rdp-day-height: 2.25rem;
+  --rdp-day-width: 2.25rem;
+  font-size: 0.875rem;
+}
+
+.drivo-day-picker .rdp-day_button:hover:not([disabled]) {
+  background-color: #fff1f0;
+}
+
+.drivo-day-picker .rdp-selected .rdp-day_button {
+  background-color: #a6001f;
+  color: #ffffff;
+}
+
+.drivo-day-picker .rdp-selected .rdp-day_button:hover {
+  background-color: #a6001f;
+  color: #ffffff;
+}
+
+.drivo-day-picker .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: #a6001f;
+  font-weight: 600;
+}

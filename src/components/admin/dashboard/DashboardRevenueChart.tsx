@@ -1,11 +1,10 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -28,6 +27,9 @@ interface DashboardRevenueChartProps {
   onCurrencyChange: (currency: string) => void
 }
 
+/** สูงเท่า Tailwind h-72 — ใช้เป็นค่าเริ่มต้นก่อน ResizeObserver วัดได้ */
+const CHART_HEIGHT_PX = 288
+
 function formatYAxisTick(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
   if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`
@@ -41,6 +43,12 @@ export function DashboardRevenueChart({
   selectedCurrency,
   onCurrencyChange,
 }: DashboardRevenueChartProps): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [chartSize, setChartSize] = useState({
+    width: 0,
+    height: CHART_HEIGHT_PX,
+  })
+
   const viewMode = getChartViewMode(selectedCurrency)
   const showAllTab = currencyOptions.length > 1
 
@@ -65,6 +73,31 @@ export function DashboardRevenueChart({
     viewMode === "single" && selectedCurrency !== "all"
       ? selectedCurrency
       : undefined
+
+  const hasChartData = plotRows.length > 0 && lineKeys.length > 0
+  const canRenderChart =
+    !isLoading && hasChartData && chartSize.width > 0 && chartSize.height > 0
+
+  // วัดขนาด container จริงก่อนวาด — หลีกเลี่ยง ResponsiveContainer width/height -1
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || isLoading || !hasChartData) return
+
+    const updateSize = (): void => {
+      const { width, height } = el.getBoundingClientRect()
+      if (width > 0 && height > 0) {
+        setChartSize({
+          width: Math.floor(width),
+          height: Math.floor(height),
+        })
+      }
+    }
+
+    updateSize()
+    const observer = new ResizeObserver(updateSize)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isLoading, hasChartData, plotRows.length, selectedCurrency])
 
   return (
     <section className="flex flex-col gap-4">
@@ -114,10 +147,16 @@ export function DashboardRevenueChart({
       <div className="rounded-2xl border border-brand-gray-100 bg-white p-4 shadow-sm md:p-6">
         {isLoading ? (
           <Skeleton className="h-72 w-full rounded-xl" />
-        ) : plotRows.length > 0 && lineKeys.length > 0 ? (
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+        ) : hasChartData ? (
+          <div
+            ref={containerRef}
+            className="h-72 w-full min-w-0"
+            style={{ height: CHART_HEIGHT_PX }}
+          >
+            {canRenderChart ? (
               <LineChart
+                width={chartSize.width}
+                height={chartSize.height}
                 data={plotRows}
                 margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
               >
@@ -172,7 +211,9 @@ export function DashboardRevenueChart({
                   />
                 ))}
               </LineChart>
-            </ResponsiveContainer>
+            ) : (
+              <Skeleton className="h-full w-full rounded-xl" />
+            )}
           </div>
         ) : (
           <p className="body-3 py-16 text-center text-brand-gray-500">

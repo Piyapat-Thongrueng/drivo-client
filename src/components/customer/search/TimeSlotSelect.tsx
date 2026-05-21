@@ -2,6 +2,8 @@
 
 import { Calendar, Clock } from "lucide-react"
 
+import CalendarDateInput from "@/components/customer/search/CalendarDateInput"
+
 // ─── Helper: แปลงตัวเลข 0-23 → AM/PM 12-hour ───────────────────────────────────
 
 function to12Hour(hour24: number): { hour12: number; ampm: "AM" | "PM" } {
@@ -79,7 +81,7 @@ export default function TimeSlotSelect({
       <div
         role="group"
         aria-labelledby={labelId}
-        className="flex min-h-11 divide-x divide-brand-gray-300 overflow-hidden rounded-lg border border-brand-gray-300 bg-brand-white transition-colors focus-within:border-brand-gray-700 focus-within:ring-1 focus-within:ring-brand-gray-700"
+        className="flex min-h-11 divide-x divide-brand-gray-300 overflow-visible rounded-lg border border-brand-gray-300 bg-brand-white transition-colors focus-within:border-brand-gray-700 focus-within:ring-1 focus-within:ring-brand-gray-700"
       >
         {/* วันที่ */}
         <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2">
@@ -87,14 +89,12 @@ export default function TimeSlotSelect({
             className="pointer-events-none h-5 w-5 shrink-0 text-brand-gray-500"
             aria-hidden
           />
-          <input
+          <CalendarDateInput
             id={dateInputId}
-            type="date"
-            value={dateValue}
-            min={minDate}
-            onChange={(e) => onDateChange(e.target.value)}
-            aria-label={`${caption} — date`}
-            className="body-2 min-w-0 flex-1 bg-transparent text-brand-gray-900 focus:outline-none"
+            caption={caption}
+            dateValue={dateValue}
+            minDate={minDate}
+            onDateChange={onDateChange}
           />
         </div>
 

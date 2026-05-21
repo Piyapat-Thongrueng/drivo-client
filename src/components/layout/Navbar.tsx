@@ -8,15 +8,21 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/auth-context";
 import { useProfile } from "@/hooks/useProfile";
+import {
+  scrollToVehicleSearch,
+  VEHICLE_SEARCH_SECTION_ID,
+} from "@/lib/landing-scroll";
 
 /**
  * Main nav links (center on desktop, list in mobile menu).
  * Change labels or paths here only.
  */
+const BOOKING_HASH = `/#${VEHICLE_SEARCH_SECTION_ID}` as const;
+
 const PUBLIC_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Booking", href: "/booking" },
-  { label: "Location", href: "/location" },
+  { label: "Booking", href: BOOKING_HASH },
+  { label: "Our fleet", href: "/fleet" },
 ] as const;
 
 const MY_BOOKINGS_LINK = { label: "My bookings", href: "/my-account" } as const;
@@ -24,39 +30,20 @@ const MY_BOOKINGS_LINK = { label: "My bookings", href: "/my-account" } as const;
 const SIGN_IN_HREF = "/login";
 const REGISTER_HREF = "/register";
 
-function isActivePage(pathname: string, href: string): boolean {
-  if (href === "/") {
-    return pathname === "/";
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 // ─── TextLink ─────────────────────────────────────────────────────────────────
+
+const NAV_LINK_CLASS =
+  "body-2 inline-block border-b-2 border-transparent pb-0.5 font-medium text-brand-gray-700 transition-colors hover:border-brand-red-200 hover:text-brand-red-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200";
 
 interface TextLinkProps {
   label: string;
   href: string;
-  active: boolean;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-function TextLink({
-  label,
-  href,
-  active,
-  onClick,
-}: TextLinkProps): React.JSX.Element {
+function TextLink({ label, href, onClick }: TextLinkProps): React.JSX.Element {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`body-3 font-medium transition-colors focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-brand-red-200 ${
-        active
-          ? "border-b-2 border-brand-red-200 pb-0.5 text-brand-red-200"
-          : "text-brand-gray-700 hover:text-brand-red-200"
-      }`}
-      aria-current={active ? "page" : undefined}
-    >
+    <Link href={href} onClick={onClick} className={NAV_LINK_CLASS}>
       {label}
     </Link>
   );
@@ -149,6 +136,16 @@ export default function Navbar(): React.JSX.Element {
     setMenuOpen(false);
   }, []);
 
+  const handleBookingClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>): void => {
+      if (pathname !== "/") return;
+      event.preventDefault();
+      closeMenu();
+      scrollToVehicleSearch();
+    },
+    [pathname, closeMenu],
+  );
+
   // Close mobile menu after navigation.
   useEffect(() => {
     closeMenu();
@@ -189,7 +186,9 @@ export default function Navbar(): React.JSX.Element {
                 <TextLink
                   label={link.label}
                   href={link.href}
-                  active={isActivePage(pathname, link.href)}
+                  onClick={
+                    link.href === BOOKING_HASH ? handleBookingClick : undefined
+                  }
                 />
               </li>
             ))}
@@ -214,12 +213,13 @@ export default function Navbar(): React.JSX.Element {
             </>
           ) : (
             <>
-              <TextLink
-                label="Sign in"
-                href={SIGN_IN_HREF}
-                active={isActivePage(pathname, SIGN_IN_HREF)}
-              />
-              <Button href={REGISTER_HREF} variant="primary" size="md">
+              <TextLink label="Sign in" href={SIGN_IN_HREF} />
+              <Button
+                href={REGISTER_HREF}
+                variant="primary"
+                size="md"
+                className="body-2"
+              >
                 Register
               </Button>
             </>
@@ -259,8 +259,13 @@ export default function Navbar(): React.JSX.Element {
                 <TextLink
                   label={link.label}
                   href={link.href}
-                  active={isActivePage(pathname, link.href)}
-                  onClick={closeMenu}
+                  onClick={(event) => {
+                    if (link.href === BOOKING_HASH) {
+                      handleBookingClick(event);
+                    } else {
+                      closeMenu();
+                    }
+                  }}
                 />
               </li>
             ))}
@@ -290,8 +295,7 @@ export default function Navbar(): React.JSX.Element {
                 <TextLink
                   label="Sign in"
                   href={SIGN_IN_HREF}
-                  active={isActivePage(pathname, SIGN_IN_HREF)}
-                  onClick={closeMenu}
+                  onClick={() => closeMenu()}
                 />
                 <Button
                   href={REGISTER_HREF}
